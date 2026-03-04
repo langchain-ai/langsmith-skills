@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Install LangSmith skills for Claude Code or DeepAgents CLI
+# Install LangGraph + LangSmith skills for Claude Code or DeepAgents CLI
 
 set -e
 
@@ -11,12 +11,13 @@ TARGET="claude"  # claude or deepagents
 GLOBAL=false
 FORCE=false
 YES=false
+LANGSMITH_ONLY=false
 
 # Usage
 usage() {
     echo "Usage: $0 [OPTIONS]"
     echo ""
-    echo "Install LangSmith skills for Claude Code or DeepAgents CLI."
+    echo "Install LangGraph + LangSmith skills for Claude Code or DeepAgents CLI."
     echo ""
     echo "Options:"
     echo "  --claude        Install for Claude Code (default)"
@@ -25,6 +26,7 @@ usage() {
     echo "                  Default: install in current directory"
     echo "  --force, -f     Overwrite skills with same names as this package"
     echo "  --yes, -y       Skip confirmation prompts"
+    echo "  --langsmith     Install only LangSmith skills"
     echo "  --help, -h      Show this help message"
     echo ""
     echo "Examples:"
@@ -56,6 +58,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --yes|-y)
             YES=true
+            shift
+            ;;
+        --langsmith)
+            LANGSMITH_ONLY=true
             shift
             ;;
         --help|-h)
@@ -92,7 +98,7 @@ else
 fi
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "LangSmith Skills Installer"
+echo "LangChain Skills Installer"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "Target:    $TOOL_NAME"
@@ -101,6 +107,9 @@ if [ "$GLOBAL" = true ]; then
     echo "Scope:     Global (all projects)"
 else
     echo "Scope:     Local (current directory)"
+fi
+if [ "$LANGSMITH_ONLY" = true ]; then
+    echo "Filter:    Only LangSmith skills"
 fi
 echo ""
 
@@ -133,6 +142,14 @@ fi
 echo ""
 echo "Installing..."
 
+# Install LangSmith CLI (best-effort, don't block on failure)
+echo "Installing LangSmith CLI..."
+if curl -sSL https://raw.githubusercontent.com/langchain-ai/langsmith-cli/main/scripts/install.sh | sh 2>/dev/null; then
+    echo "✓ LangSmith CLI installed"
+else
+    echo "⚠️  LangSmith CLI installation failed (non-critical, continuing...)"
+fi
+
 # For DeepAgents global with --force, remove existing agent
 if [ "$TARGET" = "deepagents" ] && [ "$GLOBAL" = true ] && [ "$FORCE" = true ] && [ -d "$INSTALL_DIR" ]; then
     rm -rf "$INSTALL_DIR"
@@ -157,6 +174,10 @@ if [ -d "$SCRIPT_DIR/config/skills" ]; then
     mkdir -p "$INSTALL_DIR/skills"
     for skill in "$SCRIPT_DIR/config/skills"/*; do
         skill_name=$(basename "$skill")
+        # If --langsmith is provided, only install skills prefixed with "langsmith-"
+        if [ "$LANGSMITH_ONLY" = true ] && [[ ! "$skill_name" == langsmith-* ]]; then
+            continue
+        fi
         if [ -d "$INSTALL_DIR/skills/$skill_name" ]; then
             if [ "$FORCE" = true ]; then
                 rm -rf "$INSTALL_DIR/skills/$skill_name"
