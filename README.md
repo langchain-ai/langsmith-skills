@@ -6,18 +6,10 @@ Agent skills for observing and evaluating LLM applications with [LangSmith](http
 
 ## Supported Coding Agents
 
-These skills can be installed for the following AI coding agents:
-
-| Agent | Local Install | Global Install |
-|-------|---------------|----------------|
-| **Claude Code** | `.claude/skills/` | `~/.claude/skills/` |
-| **DeepAgents CLI** | `.deepagents/skills/` | `~/.deepagents/langchain_agent/skills/` |
-
-**Note:** The `config/AGENTS.md` file is primarily for reference and is **not copied** during installation (except for DeepAgents global installs where it defines the agent persona). It may be a helpful example to incorporate into your existing `CLAUDE.md` or `AGENTS.md` configuration.
+These skills can be installed for any agent supported by [`skills.sh`](https://skills.sh), including Claude Code, Cursor, Windsurf, Goose, and [many more](https://github.com/vercel-labs/skills).
 
 ## Prerequisites
 
-- [Claude Code](https://claude.ai/claude-code) or [DeepAgents CLI](https://github.com/anthropics/deepagents-cli) installed
 - A [LangSmith API key](https://smith.langchain.com/)
 
 ## Installation
@@ -41,7 +33,7 @@ To link skills to a specific agent (e.g. Claude Code):
 npx skills add langchain-ai/langsmith-skills --agent claude-code --skill '*' --yes --global
 ```
 
-### Install Script
+### Install Script (Claude Code & Deep Agents CLI only)
 
 Alternatively, clone the repo and use the install script:
 
