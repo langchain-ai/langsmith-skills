@@ -1,6 +1,6 @@
 ---
 name: langsmith-evaluator
-description: "INVOKE THIS SKILL when building evaluation pipelines for LangSmith. Covers three core components: (1) Creating Evaluators - LLM-as-Judge, custom code; (2) Defining Run Functions - how to capture outputs and trajectories from your agent; (3) Running Evaluations - locally with evaluate() or auto-run via LangSmith. Contains helper scripts."
+description: "INVOKE THIS SKILL when building evaluation pipelines for LangSmith. Covers three core components: (1) Creating Evaluators - LLM-as-Judge, custom code; (2) Defining Run Functions - how to capture outputs and trajectories from your agent; (3) Running Evaluations - locally with evaluate() or auto-run via LangSmith. Uses the langsmith CLI tool."
 ---
 
 <oneliner>
@@ -21,9 +21,14 @@ Python Dependencies
 pip install langsmith langchain-openai python-dotenv
 ```
 
+CLI Tool (for uploading evaluators)
+```bash
+curl -sSL https://raw.githubusercontent.com/langchain-ai/langsmith-cli/main/scripts/install.sh | sh
+```
+
 JavaScript Dependencies
 ```bash
-npm install langsmith commander chalk cli-table3 dotenv openai
+npm install langsmith openai
 ```
 </setup>
 
@@ -52,18 +57,15 @@ Output structures vary significantly by framework, agent type, and configuration
 - Upload with: `--project "Project Name"`
 
 **CRITICAL - Return Format:**
+- Return `{"score": value, "comment": "..."}` - the metric key is auto-derived from the function name
 - Each evaluator returns **ONE metric only**. For multiple metrics, create multiple evaluator functions.
 - Do NOT return `{"metric_name": value}` or lists of metrics - this will error.
 
-**CRITICAL - Local vs Uploaded Differences:**
-
-| | Local `evaluate()` | Uploaded to LangSmith |
-|---|---|---|
-| **Column name** | Python: auto-derived from function name. TypeScript: must include `key` field or column is untitled | Comes from evaluator name set at upload time. Do NOT include `key` — it creates a duplicate column |
-| **Python `run` type** | `RunTree` object → `run.outputs` (attribute) | `dict` → `run["outputs"]` (subscript). Handle both: `run.outputs if hasattr(run, "outputs") else run.get("outputs", {})` |
-| **TypeScript `run` type** | Always attribute access: `run.outputs?.field` | Always attribute access: `run.outputs?.field` |
-| **Python return** | `{"score": value, "comment": "..."}` | `{"score": value, "comment": "..."}` |
-| **TypeScript return** | `{ key: "name", score: value, comment: "..." }` | `{ score: value, comment: "..." }` |
+**CRITICAL - Local vs Uploaded (Python only):**
+- Local `evaluate()`: `run` is a `RunTree` object → use `run.outputs`
+- Uploaded to LangSmith: `run` is a dict → use `run["outputs"]`
+- Handle both: `run.outputs if hasattr(run, "outputs") else run.get("outputs", {})`
+- TypeScript always uses attribute access: `run.outputs?.field`
 </evaluator_format>
 
 <evaluator_types>
@@ -74,7 +76,7 @@ Output structures vary significantly by framework, agent type, and configuration
 <llm_judge>
 ## LLM as Judge Evaluators
 
-**NOTE:** LLM-as-Judge upload is currently not supported by our script only supports code evaluators. For evaluations against a dataset, STRONGLY PREFER defining local evaluators to use with `evaluate(evaluators=[...])`.
+**NOTE:** LLM-as-Judge upload is currently not supported by the CLI — only code evaluators are supported. For evaluations against a dataset, STRONGLY PREFER defining local evaluators to use with `evaluate(evaluators=[...])`.
 
 <python>
 ```python
@@ -102,21 +104,21 @@ import OpenAI from "openai";
 const openai = new OpenAI();
 
 async function accuracyEvaluator(run, example) {
-  const runOutputs = run.outputs ?? {};
-  const exampleOutputs = example.outputs ?? {};
+    const runOutputs = run.outputs ?? {};
+    const exampleOutputs = example.outputs ?? {};
 
-  const response = await openai.chat.completions.create({
+    const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     temperature: 0,
     response_format: { type: "json_object" },
     messages: [
-      { role: "system", content: 'Respond with JSON: {"is_accurate": boolean, "reasoning": string}' },
-      { role: "user", content: `Expected: ${JSON.stringify(exampleOutputs)}\nActual: ${JSON.stringify(runOutputs)}\nIs this accurate?` }
+        { role: "system", content: 'Respond with JSON: {"is_accurate": boolean, "reasoning": string}' },
+        { role: "user", content: `Expected: ${JSON.stringify(exampleOutputs)}\nActual: ${JSON.stringify(runOutputs)}\nIs this accurate?` }
     ]
-  });
+    });
 
-  const grade = JSON.parse(response.choices[0].message.content);
-  return { key: "accuracy", score: grade.is_accurate ? 1 : 0, comment: grade.reasoning };
+    const grade = JSON.parse(response.choices[0].message.content);
+    return { score: grade.is_accurate ? 1 : 0, comment: grade.reasoning };
 }
 ```
 </typescript>
@@ -148,15 +150,15 @@ def trajectory_evaluator(run, example):
 <typescript>
 ```javascript
 function trajectoryEvaluator(run, example) {
-  const runOutputs = run.outputs ?? {};
-  const exampleOutputs = example.outputs ?? {};
-  // IMPORTANT: Replace these placeholders with your actual field names
-  // 1. Query your LangSmith trace to see what fields exist in run outputs
-  // 2. Check your dataset schema for expected field names
-  const actual = runOutputs.YOUR_TRAJECTORY_FIELD ?? [];
-  const expected = exampleOutputs.YOUR_EXPECTED_FIELD ?? [];
-  const match = JSON.stringify(actual) === JSON.stringify(expected);
-  return { key: "trajectory", score: match ? 1 : 0, comment: `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}` };
+    const runOutputs = run.outputs ?? {};
+    const exampleOutputs = example.outputs ?? {};
+    // IMPORTANT: Replace these placeholders with your actual field names
+    // 1. Query your LangSmith trace to see what fields exist in run outputs
+    // 2. Check your dataset schema for expected field names
+    const actual = runOutputs.YOUR_TRAJECTORY_FIELD ?? [];
+    const expected = exampleOutputs.YOUR_EXPECTED_FIELD ?? [];
+    const match = JSON.stringify(actual) === JSON.stringify(expected);
+    return { score: match ? 1 : 0, comment: `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}` };
 }
 ```
 </typescript>
@@ -193,11 +195,11 @@ def run_agent(inputs: dict) -> dict:
 <typescript>
 ```javascript
 async function runAgent(inputs) {
-  const result = await yourAgent.invoke(inputs);
-  // ALWAYS inspect output shape first
-  console.log("DEBUG - type:", typeof result, "keys:", Object.keys(result));
-  console.log("DEBUG - value:", result);
-  return { output: result };  // Adjust to match your dataset schema
+    const result = await yourAgent.invoke(inputs);
+    // ALWAYS inspect output shape first
+    console.log("DEBUG - type:", typeof result, "keys:", Object.keys(result));
+    console.log("DEBUG - value:", result);
+    return { output: result };  // Adjust to match your dataset schema
 }
 ```
 </typescript>
@@ -250,8 +252,8 @@ Evaluators uploaded to a dataset **automatically run** when you run experiments 
 Uploaded evaluators have very limited package access for security reasons! DO NOT upload evaluators that unless they only need to rely on standard Python / Javascript functionality, such as built-in packages. For dataset (offline) evaluators, prefer running locally with `evaluate(evaluators=[...])` first. This gives you full package access.
 
 **IMPORTANT - Code vs Structured Evaluators:**
-- **Code evaluators** (what our script uploads): Run in a limited environment without external packages. Use for deterministic logic (exact match, trajectory validation).
-- **Structured evaluators** (LLM-as-Judge): Configured via LangSmith UI, use a specific payload format with model/prompt/schema. Our script does not support this format yet.
+- **Code evaluators** (what the CLI uploads): Run in a limited environment without external packages. Use for deterministic logic (exact match, trajectory validation).
+- **Structured evaluators** (LLM-as-Judge): Configured via LangSmith UI, use a specific payload format with model/prompt/schema. The CLI does not support this format yet.
 
 **IMPORTANT - Choose the right target:**
 - `--dataset`: Offline evaluator with `(run, example)` signature - for comparing to expected values
@@ -259,51 +261,26 @@ Uploaded evaluators have very limited package access for security reasons! DO NO
 
 You must specify one. Global evaluators are not supported.
 
-<python>
-
 ```bash
 # List all evaluators
-python upload_evaluators.py list
+langsmith evaluator list
 
 # Upload offline evaluator (attached to dataset)
-python upload_evaluators.py upload my_evaluators.py \
+langsmith evaluator upload my_evaluators.py \
   --name "Trajectory Match" --function trajectory_evaluator \
   --dataset "My Dataset" --replace
 
 # Upload online evaluator (attached to project)
-python upload_evaluators.py upload my_evaluators.py \
+langsmith evaluator upload my_evaluators.py \
   --name "Quality Check" --function quality_check \
   --project "Production Agent" --replace
 
 # Delete
-python upload_evaluators.py delete "Trajectory Match"
+langsmith evaluator delete "Trajectory Match"
 ```
-
-</python>
-<typescript>
-
-```bash
-# List all evaluators
-npx tsx upload_evaluators.ts list
-
-# Upload offline evaluator (attached to dataset)
-npx tsx upload_evaluators.ts upload my_evaluators.js \
-  --name "Trajectory Match" --function trajectoryEvaluator \
-  --dataset "My Dataset" --replace
-
-# Upload online evaluator (attached to project)
-npx tsx upload_evaluators.ts upload my_evaluators.js \
-  --name "Quality Check" --function qualityCheck \
-  --project "Production Agent" --replace
-
-# Delete
-npx tsx upload_evaluators.ts delete "Trajectory Match"
-```
-
-</typescript>
 
 **IMPORTANT - Safety Prompts:**
-- The script prompts for confirmation before destructive operations
+- The CLI prompts for confirmation before destructive operations
 - **NEVER use `--yes` flag unless the user explicitly requests it**
 </upload>
 
