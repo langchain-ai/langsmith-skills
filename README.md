@@ -22,43 +22,28 @@ These skills can be installed for the following AI coding agents:
 
 ## Installation
 
-### Quick Install (Local)
+### Quick Install
 
-Install into the current directory with a single command (run from your project root):
+Using [`npx skills`](https://github.com/vercel-labs/skills):
 
-**Claude Code:**
+**Local** (current project):
 ```bash
-curl -fsSL https://github.com/langchain-ai/langsmith-skills/archive/main.tar.gz | tar -xz -C /tmp && /tmp/langsmith-skills-main/install.sh -y && rm -rf /tmp/langsmith-skills-main
+npx skills add langchain-ai/langsmith-skills --skill '*' --yes
 ```
 
-**DeepAgents CLI:**
+**Global** (all projects):
 ```bash
-curl -fsSL https://github.com/langchain-ai/langsmith-skills/archive/main.tar.gz | tar -xz -C /tmp && /tmp/langsmith-skills-main/install.sh --deepagents -y && rm -rf /tmp/langsmith-skills-main
+npx skills add langchain-ai/langsmith-skills --skill '*' --yes --global
 ```
 
-### Quick Install (Global)
-
-Install globally with a single command:
-
-**Claude Code:**
+To link skills to a specific agent (e.g. Claude Code):
 ```bash
-curl -fsSL https://github.com/langchain-ai/langsmith-skills/archive/main.tar.gz | tar -xz -C /tmp && /tmp/langsmith-skills-main/install.sh --global -y && rm -rf /tmp/langsmith-skills-main
+npx skills add langchain-ai/langsmith-skills --agent claude-code --skill '*' --yes --global
 ```
 
-**DeepAgents CLI:**
-```bash
-curl -fsSL https://github.com/langchain-ai/langsmith-skills/archive/main.tar.gz | tar -xz -C /tmp && /tmp/langsmith-skills-main/install.sh --deepagents --global -y && rm -rf /tmp/langsmith-skills-main
-```
+### Install Script
 
-### Using `npx skills`
-
-```bash
-npx skills add /path/to/langsmith-skills --yes
-```
-
-### Manual Install
-
-Clone the repo and run the install script for more options:
+Alternatively, clone the repo and use the install script:
 
 ```bash
 # Install for Claude Code in current directory (default)
@@ -72,12 +57,7 @@ Clone the repo and run the install script for more options:
 
 # Install for DeepAgents CLI globally (includes agent persona)
 ./install.sh --deepagents --global
-
-# Force reinstall without prompts
-./install.sh -f -y
 ```
-
-### Options
 
 | Flag | Description |
 |------|-------------|
