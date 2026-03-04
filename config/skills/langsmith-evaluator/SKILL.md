@@ -60,15 +60,18 @@ Output structures vary significantly by framework, agent type, and configuration
 - Upload with: `--project "Project Name"`
 
 **CRITICAL - Return Format:**
-- Return `{"score": value, "comment": "..."}` - the metric key is auto-derived from the function name
 - Each evaluator returns **ONE metric only**. For multiple metrics, create multiple evaluator functions.
 - Do NOT return `{"metric_name": value}` or lists of metrics - this will error.
 
-**CRITICAL - Local vs Uploaded (Python only):**
-- Local `evaluate()`: `run` is a `RunTree` object → use `run.outputs`
-- Uploaded to LangSmith: `run` is a dict → use `run["outputs"]`
-- Handle both: `run.outputs if hasattr(run, "outputs") else run.get("outputs", {})`
-- TypeScript always uses attribute access: `run.outputs?.field`
+**CRITICAL - Local vs Uploaded Differences:**
+
+| | Local `evaluate()` | Uploaded to LangSmith |
+|---|---|---|
+| **Column name** | Python: auto-derived from function name. TypeScript: must include `key` field or column is untitled | Comes from evaluator name set at upload time. Do NOT include `key` — it creates a duplicate column |
+| **Python `run` type** | `RunTree` object → `run.outputs` (attribute) | `dict` → `run["outputs"]` (subscript). Handle both: `run.outputs if hasattr(run, "outputs") else run.get("outputs", {})` |
+| **TypeScript `run` type** | Always attribute access: `run.outputs?.field` | Always attribute access: `run.outputs?.field` |
+| **Python return** | `{"score": value, "comment": "..."}` | `{"score": value, "comment": "..."}` |
+| **TypeScript return** | `{ key: "name", score: value, comment: "..." }` | `{ score: value, comment: "..." }` |
 </evaluator_format>
 
 <evaluator_types>
@@ -252,7 +255,7 @@ The key is to capture the tool name at execution time, not at definition time.
 Evaluators uploaded to a dataset **automatically run** when you run experiments on that dataset. You do NOT need to pass them to `evaluate()` - just run your agent against the dataset and the uploaded evaluators execute automatically.
 
 **IMPORTANT - Local vs Uploaded:**
-Uploaded evaluators have very limited package access for security reasons! DO NOT upload evaluators that unless they only need to rely on standard Python / Javascript functionality, such as built-in packages. For dataset (offline) evaluators, prefer running locally with `evaluate(evaluators=[...])` first. This gives you full package access.
+Uploaded evaluators run in a sandboxed environment with very limited package access. Only use built-in/standard library imports, and place all imports **inside** the evaluator function body. For dataset (offline) evaluators, prefer running locally with `evaluate(evaluators=[...])` first — this gives you full package access.
 
 **IMPORTANT - Code vs Structured Evaluators:**
 - **Code evaluators** (what the CLI uploads): Run in a limited environment without external packages. Use for deterministic logic (exact match, trajectory validation).
