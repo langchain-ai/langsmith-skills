@@ -6,7 +6,7 @@ Agent skills for observing and evaluating LLM applications with [LangSmith](http
 
 ## Supported Coding Agents
 
-These skills can be installed for any agent supported by [`skills.sh`](https://skills.sh), including Claude Code, Cursor, Windsurf, Goose, and [many more](https://github.com/vercel-labs/skills).
+These skills can be installed for any agent supported by [`skills.sh`](https://skills.sh), including Claude Code, [DeepAgents CLI](https://docs.langchain.com/oss/python/deepagents/cli/overview) Cursor, Windsurf, Goose, and [many more](https://github.com/vercel-labs/skills).
 
 ## Prerequisites
 
