@@ -95,10 +95,25 @@ def build_agent():
 
 def run_agent(question: str) -> str:
     """Run the agent on a single question and return the response."""
+    return run_agent_with_tools(question)["response"]
+
+
+def run_agent_with_tools(question: str) -> dict:
+    """Run the agent and return response + tool usage info for evaluation."""
     agent = build_agent()
     result = agent.invoke({"messages": [{"role": "user", "content": question}]})
     messages = result["messages"]
-    return messages[-1].content
+
+    tools_used = []
+    for msg in messages:
+        if hasattr(msg, "tool_calls") and msg.tool_calls:
+            for tc in msg.tool_calls:
+                tools_used.append(tc["name"])
+
+    return {
+        "response": messages[-1].content,
+        "tools_used": tools_used,
+    }
 
 
 # ---------------------------------------------------------------------------

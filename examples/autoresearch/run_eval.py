@@ -24,10 +24,11 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
 from langchain_openai import ChatOpenAI
-from langsmith import Client, evaluate, traceable
+from langsmith import Client, evaluate
+from pydantic import BaseModel, Field
 
 SCRIPT_DIR = Path(__file__).parent
 
@@ -42,16 +43,15 @@ def load_dataset(path: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-@traceable(name="agent_run")
 def run_agent_for_eval(inputs: dict) -> dict:
+    """Run the agent and capture tool usage in the output for evaluators."""
     sys.path.insert(0, str(SCRIPT_DIR))
-    from agent import run_agent
+    from agent import run_agent_with_tools
 
     try:
-        response = run_agent(inputs["question"])
-        return {"response": response}
+        return run_agent_with_tools(inputs["question"])
     except Exception as e:
-        return {"response": f"ERROR: {e}", "error": True}
+        return {"response": f"ERROR: {e}", "error": True, "tools_used": []}
 
 
 # ---------------------------------------------------------------------------
@@ -59,8 +59,20 @@ def run_agent_for_eval(inputs: dict) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def _get_judge():
-    return ChatOpenAI(model="gpt-4o-mini", temperature=0)
+class CorrectnessGrade(BaseModel):
+    reasoning: Annotated[str, Field(description="Explain your reasoning")]
+    score: Annotated[int, Field(description="1 if correct, 0 if incorrect")]
+
+
+class HelpfulnessGrade(BaseModel):
+    reasoning: Annotated[str, Field(description="Explain your reasoning")]
+    score: Annotated[int, Field(description="1 if helpful, 0 if unhelpful")]
+
+
+def _get_judge(schema: type[BaseModel]) -> Any:
+    return ChatOpenAI(model="gpt-4o-mini", temperature=0).with_structured_output(
+        schema, method="json_schema", strict=True
+    )
 
 
 def correctness_evaluator(run, example) -> dict:
@@ -74,7 +86,7 @@ def correctness_evaluator(run, example) -> dict:
     if run_outputs.get("error"):
         return {"score": 0, "comment": "Agent returned an error"}
 
-    judge = _get_judge()
+    judge = _get_judge(CorrectnessGrade)
     grade = judge.invoke(
         [
             {
@@ -82,8 +94,7 @@ def correctness_evaluator(run, example) -> dict:
                 "content": (
                     "You are grading an AI assistant's response. "
                     "Score 1 if the response contains the correct answer (it doesn't need to match exactly, "
-                    "just be factually equivalent). Score 0 if incorrect or missing. "
-                    "Respond with ONLY a JSON object: {\"score\": 0 or 1, \"reasoning\": \"...\"}"
+                    "just be factually equivalent). Score 0 if incorrect or missing."
                 ),
             },
             {
@@ -92,24 +103,21 @@ def correctness_evaluator(run, example) -> dict:
             },
         ]
     )
-    try:
-        result = json.loads(grade.content)
-        return {"score": result.get("score", 0), "comment": result.get("reasoning", "")}
-    except (json.JSONDecodeError, AttributeError):
-        content = grade.content if hasattr(grade, "content") else str(grade)
-        return {"score": 0, "comment": f"Judge parse error: {content}"}
+    return {"score": grade.score, "comment": grade.reasoning}
 
 
 def helpfulness_evaluator(run, example) -> dict:
     """Score whether the response is helpful, clear, and well-structured."""
     run_outputs = run.outputs if hasattr(run, "outputs") else run.get("outputs", {}) or {}
+    example_inputs = example.inputs if hasattr(example, "inputs") else example.get("inputs", {}) or {}
 
     response = run_outputs.get("response", "")
+    question = example_inputs.get("question", "")
 
     if run_outputs.get("error"):
         return {"score": 0, "comment": "Agent returned an error"}
 
-    judge = _get_judge()
+    judge = _get_judge(HelpfulnessGrade)
     grade = judge.invoke(
         [
             {
@@ -117,26 +125,20 @@ def helpfulness_evaluator(run, example) -> dict:
                 "content": (
                     "You are grading an AI assistant's response for helpfulness. "
                     "Score 1 if the response is clear, direct, and helpful. "
-                    "Score 0 if it's confusing, overly verbose, or unhelpful. "
-                    "Respond with ONLY a JSON object: {\"score\": 0 or 1, \"reasoning\": \"...\"}"
+                    "Score 0 if it's confusing, overly verbose, or unhelpful."
                 ),
             },
             {
                 "role": "user",
-                "content": f"Question: {example.inputs.get('question', '') if hasattr(example, 'inputs') else example.get('inputs', {}).get('question', '')}\n\nResponse: {response}",
+                "content": f"Question: {question}\n\nResponse: {response}",
             },
         ]
     )
-    try:
-        result = json.loads(grade.content)
-        return {"score": result.get("score", 0), "comment": result.get("reasoning", "")}
-    except (json.JSONDecodeError, AttributeError):
-        content = grade.content if hasattr(grade, "content") else str(grade)
-        return {"score": 0, "comment": f"Judge parse error: {content}"}
+    return {"score": grade.score, "comment": grade.reasoning}
 
 
 def tool_usage_evaluator(run, example) -> dict:
-    """Score whether the agent used tools appropriately (used them when expected, didn't when not)."""
+    """Score whether the agent used tools appropriately."""
     run_outputs = run.outputs if hasattr(run, "outputs") else run.get("outputs", {}) or {}
     example_outputs = example.outputs if hasattr(example, "outputs") else example.get("outputs", {}) or {}
 
@@ -147,17 +149,14 @@ def tool_usage_evaluator(run, example) -> dict:
     if expected_tool_use is None:
         return {"score": 1, "comment": "No tool usage expectation defined"}
 
-    response = run_outputs.get("response", "")
-    used_tool = "Error:" not in response and any(
-        marker in str(run_outputs)
-        for marker in ["calculator", "unit_converter", "tool_calls"]
-    )
+    tools_used = run_outputs.get("tools_used", [])
+    actually_used = len(tools_used) > 0
 
-    if expected_tool_use and not used_tool:
+    if expected_tool_use and not actually_used:
         return {"score": 0, "comment": "Expected tool use but agent didn't use tools"}
-    if not expected_tool_use and used_tool:
-        return {"score": 0, "comment": "Agent used tools when not expected"}
-    return {"score": 1, "comment": "Tool usage matched expectations"}
+    if not expected_tool_use and actually_used:
+        return {"score": 0, "comment": f"Agent used tools when not expected: {tools_used}"}
+    return {"score": 1, "comment": f"Tool usage matched expectations (tools: {tools_used})"}
 
 
 # ---------------------------------------------------------------------------
@@ -170,11 +169,8 @@ DATASET_NAME = "autoresearch-agent-eval"
 
 def get_or_create_dataset(client: Client, dataset_path: str) -> str:
     """Return the persistent dataset name, creating it from dataset.json if it doesn't exist yet."""
-    try:
-        client.read_dataset(dataset_name=DATASET_NAME)
+    if client.has_dataset(dataset_name=DATASET_NAME):
         return DATASET_NAME
-    except Exception:
-        pass
 
     examples = load_dataset(dataset_path)
     client.create_dataset(DATASET_NAME, description="Autoresearch agent evaluation dataset")
@@ -208,26 +204,20 @@ def run_evaluation(dataset_path: str, prefix: str) -> dict[str, Any]:
 
     for result in results:
         num_examples += 1
-        eval_results = result.get("evaluation_results", {})
-        eval_list = eval_results.get("results", [])
+        eval_results = result["evaluation_results"]
+        eval_list = eval_results["results"]
 
         for er in eval_list:
-            key = er.key if hasattr(er, "key") else er.get("key", "")
-            score = er.score if hasattr(er, "score") else er.get("score", 0)
-            if score is None:
-                score = 0
-            if "correctness" in key:
-                correctness_scores.append(score)
-            elif "helpfulness" in key:
-                helpfulness_scores.append(score)
-            elif "tool_usage" in key:
-                tool_usage_scores.append(score)
+            if er.score is None:
+                continue
+            if "correctness" in er.key:
+                correctness_scores.append(er.score)
+            elif "helpfulness" in er.key:
+                helpfulness_scores.append(er.score)
+            elif "tool_usage" in er.key:
+                tool_usage_scores.append(er.score)
 
-        run_output = result.get("run", {})
-        if hasattr(run_output, "outputs"):
-            outputs = run_output.outputs or {}
-        else:
-            outputs = run_output.get("outputs", {}) or {}
+        outputs = result["run"].outputs or {}
         if outputs.get("error"):
             num_errors += 1
 
@@ -238,10 +228,9 @@ def run_evaluation(dataset_path: str, prefix: str) -> dict[str, Any]:
 
     experiment_url = ""
     try:
-        ds = client.read_dataset(dataset_name=dataset_name)
-        experiments = list(client.list_experiments(dataset_id=ds.id))
-        if experiments:
-            experiment_url = experiments[0].url or ""
+        projects = list(client.list_projects(name=results.experiment_name))
+        if projects:
+            experiment_url = projects[0].url or ""
     except Exception:
         pass
 
