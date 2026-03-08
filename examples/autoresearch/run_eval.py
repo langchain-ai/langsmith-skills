@@ -23,7 +23,6 @@ Output format (parsed by the experiment loop):
 import argparse
 import json
 import sys
-import uuid
 from pathlib import Path
 from typing import Any
 
@@ -166,18 +165,32 @@ def tool_usage_evaluator(run, example) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def run_evaluation(dataset_path: str, prefix: str) -> dict[str, Any]:
-    client = Client()
+DATASET_NAME = "autoresearch-agent-eval"
+
+
+def get_or_create_dataset(client: Client, dataset_path: str) -> str:
+    """Return the persistent dataset name, creating it from dataset.json if it doesn't exist yet."""
+    try:
+        client.read_dataset(dataset_name=DATASET_NAME)
+        return DATASET_NAME
+    except Exception:
+        pass
 
     examples = load_dataset(dataset_path)
-
-    dataset_name = f"autoresearch-eval-{uuid.uuid4().hex[:8]}"
-    dataset = client.create_dataset(dataset_name, description="Autoresearch evaluation dataset")
+    client.create_dataset(DATASET_NAME, description="Autoresearch agent evaluation dataset")
     client.create_examples(
         inputs=[e["inputs"] for e in examples],
         outputs=[e["outputs"] for e in examples],
-        dataset_name=dataset_name,
+        dataset_name=DATASET_NAME,
     )
+    print(f"Created persistent dataset: {DATASET_NAME}")
+    return DATASET_NAME
+
+
+def run_evaluation(dataset_path: str, prefix: str) -> dict[str, Any]:
+    client = Client()
+
+    dataset_name = get_or_create_dataset(client, dataset_path)
 
     results = evaluate(
         run_agent_for_eval,
@@ -191,8 +204,10 @@ def run_evaluation(dataset_path: str, prefix: str) -> dict[str, Any]:
     helpfulness_scores = []
     tool_usage_scores = []
     num_errors = 0
+    num_examples = 0
 
     for result in results:
+        num_examples += 1
         eval_results = result.get("evaluation_results", {})
         eval_list = eval_results.get("results", [])
 
@@ -230,22 +245,15 @@ def run_evaluation(dataset_path: str, prefix: str) -> dict[str, Any]:
     except Exception:
         pass
 
-    summary = {
+    return {
         "avg_correctness": avg_correctness,
         "avg_helpfulness": avg_helpfulness,
         "avg_tool_usage": avg_tool_usage,
         "overall_score": overall,
-        "num_examples": len(examples),
+        "num_examples": num_examples,
         "num_errors": num_errors,
         "experiment_url": experiment_url,
     }
-
-    try:
-        client.delete_dataset(dataset_name=dataset_name)
-    except Exception:
-        pass
-
-    return summary
 
 
 def main():
