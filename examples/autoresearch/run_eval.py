@@ -1,9 +1,9 @@
 """
 Evaluation harness for autoresearch agents.
 
-Runs the agent against a fixed dataset and scores it using LangSmith.
-DO NOT MODIFY — this is the fixed evaluation, equivalent to prepare.py
-in karpathy/autoresearch.
+Runs the agent against a dataset and scores it using LangSmith.
+Customize this file BEFORE starting the autonomous experiment loop.
+Once the loop begins, this file is fixed — only agent.py changes.
 
 Usage:
     python run_eval.py
@@ -18,6 +18,12 @@ Output format (parsed by the experiment loop):
     num_examples: 20
     num_errors: 0
     experiment_url: https://smith.langchain.com/...
+
+Customization points (search for "CUSTOMIZE"):
+    1. run_agent_for_eval() — how to call your agent
+    2. Evaluators — what metrics to score
+    3. EVALUATORS list — which evaluators to run
+    4. DATASET_NAME — name of the persistent LangSmith dataset
 """
 
 import argparse
@@ -39,12 +45,18 @@ def load_dataset(path: str) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
-# Run function — wraps the agent for evaluation
+# CUSTOMIZE 1: Run function — how to call your agent
+#
+# This function is called once per dataset example. It receives the example's
+# inputs dict and must return a dict that your evaluators can score.
+#
+# The return dict is what evaluators see as `run.outputs`. If you need
+# evaluators to check tool usage, trajectories, etc., return that data here.
 # ---------------------------------------------------------------------------
 
 
 def run_agent_for_eval(inputs: dict) -> dict:
-    """Run the agent and capture tool usage in the output for evaluators."""
+    """Call the agent and return outputs for evaluators to score."""
     sys.path.insert(0, str(SCRIPT_DIR))
     from agent import run_agent_with_tools
 
@@ -55,7 +67,13 @@ def run_agent_for_eval(inputs: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Evaluators
+# CUSTOMIZE 2: Evaluators
+#
+# Each evaluator takes (run, example) and returns {"score": number, "comment": str}.
+# - run.outputs  = the dict your run function returned above
+# - example.outputs = the "outputs" from your dataset.json
+#
+# Add, remove, or replace these to match your quality criteria.
 # ---------------------------------------------------------------------------
 
 
@@ -76,9 +94,9 @@ def _get_judge(schema: type[BaseModel]) -> Any:
 
 
 def correctness_evaluator(run, example) -> dict:
-    """Score whether the agent's response is factually correct compared to the expected answer."""
-    run_outputs = run.outputs if hasattr(run, "outputs") else run.get("outputs", {}) or {}
-    example_outputs = example.outputs if hasattr(example, "outputs") else example.get("outputs", {}) or {}
+    """LLM-as-judge: is the response factually correct?"""
+    run_outputs = run.outputs or {}
+    example_outputs = example.outputs or {}
 
     response = run_outputs.get("response", "")
     expected = example_outputs.get("answer", "")
@@ -107,9 +125,9 @@ def correctness_evaluator(run, example) -> dict:
 
 
 def helpfulness_evaluator(run, example) -> dict:
-    """Score whether the response is helpful, clear, and well-structured."""
-    run_outputs = run.outputs if hasattr(run, "outputs") else run.get("outputs", {}) or {}
-    example_inputs = example.inputs if hasattr(example, "inputs") else example.get("inputs", {}) or {}
+    """LLM-as-judge: is the response clear, direct, and helpful?"""
+    run_outputs = run.outputs or {}
+    example_inputs = example.inputs or {}
 
     response = run_outputs.get("response", "")
     question = example_inputs.get("question", "")
@@ -138,9 +156,9 @@ def helpfulness_evaluator(run, example) -> dict:
 
 
 def tool_usage_evaluator(run, example) -> dict:
-    """Score whether the agent used tools appropriately."""
-    run_outputs = run.outputs if hasattr(run, "outputs") else run.get("outputs", {}) or {}
-    example_outputs = example.outputs if hasattr(example, "outputs") else example.get("outputs", {}) or {}
+    """Code-based: did the agent use tools when expected?"""
+    run_outputs = run.outputs or {}
+    example_outputs = example.outputs or {}
 
     if run_outputs.get("error"):
         return {"score": 0, "comment": "Agent returned an error"}
@@ -160,11 +178,20 @@ def tool_usage_evaluator(run, example) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Main evaluation
+# CUSTOMIZE 3: Which evaluators to run
 # ---------------------------------------------------------------------------
 
+EVALUATORS = [correctness_evaluator, helpfulness_evaluator, tool_usage_evaluator]
+
+# ---------------------------------------------------------------------------
+# CUSTOMIZE 4: Dataset name in LangSmith (persistent across experiments)
+# ---------------------------------------------------------------------------
 
 DATASET_NAME = "autoresearch-agent-eval"
+
+# ---------------------------------------------------------------------------
+# Evaluation infrastructure (you probably don't need to change below here)
+# ---------------------------------------------------------------------------
 
 
 def get_or_create_dataset(client: Client, dataset_path: str) -> str:
@@ -191,40 +218,27 @@ def run_evaluation(dataset_path: str, prefix: str) -> dict[str, Any]:
     results = evaluate(
         run_agent_for_eval,
         data=dataset_name,
-        evaluators=[correctness_evaluator, helpfulness_evaluator, tool_usage_evaluator],
+        evaluators=EVALUATORS,
         experiment_prefix=prefix,
         max_concurrency=4,
     )
 
-    correctness_scores = []
-    helpfulness_scores = []
-    tool_usage_scores = []
+    scores_by_evaluator: dict[str, list[float]] = {}
     num_errors = 0
     num_examples = 0
 
     for result in results:
         num_examples += 1
-        eval_results = result["evaluation_results"]
-        eval_list = eval_results["results"]
-
-        for er in eval_list:
-            if er.score is None:
-                continue
-            if "correctness" in er.key:
-                correctness_scores.append(er.score)
-            elif "helpfulness" in er.key:
-                helpfulness_scores.append(er.score)
-            elif "tool_usage" in er.key:
-                tool_usage_scores.append(er.score)
+        for er in result["evaluation_results"]["results"]:
+            if er.score is not None:
+                scores_by_evaluator.setdefault(er.key, []).append(er.score)
 
         outputs = result["run"].outputs or {}
         if outputs.get("error"):
             num_errors += 1
 
-    avg_correctness = sum(correctness_scores) / len(correctness_scores) if correctness_scores else 0
-    avg_helpfulness = sum(helpfulness_scores) / len(helpfulness_scores) if helpfulness_scores else 0
-    avg_tool_usage = sum(tool_usage_scores) / len(tool_usage_scores) if tool_usage_scores else 0
-    overall = (avg_correctness + avg_helpfulness + avg_tool_usage) / 3
+    averages = {k: sum(v) / len(v) for k, v in scores_by_evaluator.items() if v}
+    overall = sum(averages.values()) / len(averages) if averages else 0
 
     experiment_url = ""
     try:
@@ -234,15 +248,12 @@ def run_evaluation(dataset_path: str, prefix: str) -> dict[str, Any]:
     except Exception:
         pass
 
-    return {
-        "avg_correctness": avg_correctness,
-        "avg_helpfulness": avg_helpfulness,
-        "avg_tool_usage": avg_tool_usage,
-        "overall_score": overall,
-        "num_examples": num_examples,
-        "num_errors": num_errors,
-        "experiment_url": experiment_url,
-    }
+    summary = {f"avg_{k}": v for k, v in averages.items()}
+    summary["overall_score"] = overall
+    summary["num_examples"] = num_examples
+    summary["num_errors"] = num_errors
+    summary["experiment_url"] = experiment_url
+    return summary
 
 
 def main():

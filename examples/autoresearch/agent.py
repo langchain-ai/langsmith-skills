@@ -1,8 +1,9 @@
 """
 Autoresearch agent — the file the coding agent optimizes.
 
-This is a ReAct agent built with LangGraph. Everything here is fair game:
-system prompt, tools, model, architecture, parameters.
+This is a starting template using LangGraph. You can replace this entirely
+with any agent implementation (plain OpenAI SDK, Anthropic, custom code, etc.)
+as long as you preserve the function contract expected by run_eval.py.
 
 Usage:
     python agent.py "What is 25 * 37?"
@@ -93,8 +94,17 @@ def build_agent():
     return create_react_agent(llm, tools=TOOLS, prompt=SYSTEM_PROMPT)
 
 
+# ---------------------------------------------------------------------------
+# Functions called by run_eval.py
+#
+# run_agent_with_tools() is the contract with the eval harness. It must
+# return a dict that the evaluators can score. If you replace the agent
+# entirely, just make sure this function still returns the right shape.
+# ---------------------------------------------------------------------------
+
+
 def run_agent(question: str) -> str:
-    """Run the agent on a single question and return the response."""
+    """Run the agent on a single question and return the response text."""
     return run_agent_with_tools(question)["response"]
 
 

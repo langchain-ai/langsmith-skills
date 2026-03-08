@@ -9,14 +9,14 @@ To set up a new experiment, work with the user to:
 1. **Agree on a run tag**: propose a tag based on today's date (e.g. `mar5`). The branch `autoresearch/<tag>` must not already exist — this is a fresh run.
 2. **Create the branch**: `git checkout -b autoresearch/<tag>` from current main.
 3. **Read the in-scope files**: The project is small. Read these files for full context:
-   - `README.md` — project context.
-   - `agent.py` — the file you modify. Agent implementation: prompt, tools, model, architecture.
-   - `run_eval.py` — fixed evaluation harness. Do not modify.
-   - `dataset.json` — fixed evaluation dataset. Do not modify.
+   - `README.md` — project context and customization guide.
+   - `agent.py` — the file you modify. The agent implementation.
+   - `run_eval.py` — evaluation harness and metrics. Fixed during the experiment loop.
+   - `dataset.json` — evaluation dataset. Fixed during the experiment loop.
 4. **Verify setup**: Check that required environment variables are set:
    - `LANGSMITH_API_KEY`
    - `LANGSMITH_TRACING=true`
-   - `OPENAI_API_KEY`
+   - Any LLM API keys the agent needs (e.g. `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`)
 5. **Run the baseline**: Your first run establishes the baseline. Run `python run_eval.py` and record the results.
 6. **Initialize results.tsv**: Create `results.tsv` with header row and the baseline entry.
 7. **Confirm and go**: Confirm setup looks good.
@@ -28,15 +28,15 @@ Once you get confirmation, kick off the experimentation.
 Each experiment runs the agent against a fixed evaluation dataset using LangSmith. You launch it simply as: `python run_eval.py > eval.log 2>&1`.
 
 **What you CAN do:**
-- Modify `agent.py` — this is the only file you edit. Everything is fair game: system prompt, tools, model choice, temperature, agent architecture, tool descriptions, output formatting, etc.
+- Modify `agent.py` — this is the only file you edit. Everything is fair game: system prompt, tools, model choice, temperature, agent architecture, framework, output formatting, etc. You can even replace the entire implementation (e.g. switch from LangGraph to plain OpenAI SDK) as long as the function contract expected by `run_eval.py` is preserved.
 
 **What you CANNOT do:**
-- Modify `run_eval.py`. It is read-only. It contains the fixed evaluation harness and evaluators.
-- Modify `dataset.json`. It is read-only. It contains the fixed test cases.
+- Modify `run_eval.py`. It is read-only during the experiment loop. It contains the evaluation harness and metrics.
+- Modify `dataset.json`. It is read-only during the experiment loop. It contains the test cases.
 - Install new packages or add dependencies beyond what's already available.
 - Modify the evaluators. The scoring functions in `run_eval.py` are the ground truth metrics.
 
-**The goal is simple: get the highest `overall_score`.** Since the evaluation is fixed, you don't need to worry about the eval pipeline — it's always the same. Everything in `agent.py` is fair game: change the prompt, the tools, the model, the temperature, the architecture. The only constraint is that the code runs without crashing and the agent returns valid responses.
+**The goal is simple: get the highest `overall_score`.** Since the evaluation is fixed, you don't need to worry about the eval pipeline — it's always the same. Everything in `agent.py` is fair game. The only constraint is that the code runs without crashing and the agent returns valid responses matching the contract expected by `run_eval.py`.
 
 **Cost** is a soft constraint. Using a more expensive model (e.g. gpt-4o instead of gpt-4o-mini) is acceptable for meaningful score gains, but don't use unnecessarily expensive configurations for marginal improvements.
 
@@ -101,8 +101,8 @@ LOOP FOREVER:
 2. Think about what to try next. Consider:
    - Improving the system prompt (more specific instructions, better formatting guidance)
    - Adding or improving tools (better descriptions, more capable implementations)
-   - Changing the model (gpt-4o vs gpt-4o-mini, temperature adjustments)
-   - Modifying the agent architecture (different agent types, custom logic)
+   - Changing the model or provider (gpt-4o vs gpt-4o-mini, Claude vs GPT, temperature adjustments)
+   - Modifying the agent architecture (different agent types, custom logic, different framework)
    - Combining previous near-misses
 3. Edit `agent.py` with your experimental idea
 4. git commit
@@ -131,9 +131,10 @@ Here are some starting ideas (but don't limit yourself to these):
 
 - **Prompt engineering**: Add explicit instructions for when to use tools vs. answer directly
 - **Tool descriptions**: Make tool docstrings more descriptive so the LLM knows when to use them
-- **Few-shot examples**: Add examples to the system prompt showing correct tool usage
-- **Model upgrade**: Try gpt-4o instead of gpt-4o-mini for better reasoning
+- **Few-shot examples**: Add examples to the system prompt showing correct behavior
+- **Model upgrade**: Try a more capable model for better reasoning
 - **Temperature tuning**: Try temperature=0.1 or 0.2 for slightly more creative responses
 - **Output formatting**: Add instructions about response format (concise, direct answers)
 - **Tool improvements**: Make tools more robust, handle edge cases better
-- **Architecture changes**: Try a different agent pattern or add custom routing logic
+- **Architecture changes**: Try a different agent pattern, framework, or custom routing logic
+- **Framework swap**: Try replacing the agent framework entirely (e.g. LangGraph → plain SDK)

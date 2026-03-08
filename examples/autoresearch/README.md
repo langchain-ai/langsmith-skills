@@ -38,12 +38,14 @@ Give an AI coding agent a working agent implementation and an evaluation dataset
 ## Project Structure
 
 ```
-agent.py        — the agent implementation (THIS IS WHAT GETS OPTIMIZED)
-run_eval.py     — evaluation harness using LangSmith (do not modify)
-dataset.json    — evaluation dataset (do not modify)
-program.md      — instructions for the AI coding agent
+agent.py        — YOUR agent implementation (the coding agent optimizes this)
+run_eval.py     — YOUR evaluation harness + metrics (customize before starting)
+dataset.json    — YOUR evaluation dataset (customize before starting)
+program.md      — instructions for the AI coding agent (customize before starting)
 results.tsv     — experiment log (auto-generated)
 ```
+
+**Before you start the autonomous loop**, you customize everything to fit your use case. Once the loop begins, `run_eval.py` and `dataset.json` are fixed — only `agent.py` changes.
 
 ## Quick Start
 
@@ -51,13 +53,13 @@ results.tsv     — experiment log (auto-generated)
 
 - Python 3.10+
 - A [LangSmith API key](https://smith.langchain.com/)
-- An [OpenAI API key](https://platform.openai.com/) (or Anthropic, etc.)
+- An LLM API key (OpenAI, Anthropic, etc.)
 
 ### Setup
 
 ```bash
-# 1. Install dependencies
-pip install langsmith langchain langchain-openai langgraph
+# 1. Install dependencies (adjust for your agent's needs)
+pip install langsmith langchain-openai langgraph
 
 # 2. Set environment variables
 export LANGSMITH_API_KEY=<your-key>
@@ -81,38 +83,124 @@ Read program.md and let's kick off a new experiment! Do the setup first.
 
 The coding agent will then autonomously iterate on `agent.py`, running evals and tracking results.
 
+## Bring Your Own Everything
+
+This repo ships with a working example (a Q&A agent with calculator tools), but it's designed as a **template**. Customize all three components before starting the autonomous loop.
+
+### Bring Your Own Agent
+
+Replace `agent.py` with any agent implementation. It doesn't need to use LangChain or LangGraph — any Python code works. The only requirement is that it exposes a function that `run_eval.py` can call.
+
+**Examples:**
+
+```python
+# Option A: Plain OpenAI SDK
+from openai import OpenAI
+client = OpenAI()
+
+def run_agent(question: str) -> dict:
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": question}]
+    )
+    return {"response": response.choices[0].message.content}
+```
+
+```python
+# Option B: Anthropic SDK
+import anthropic
+client = anthropic.Anthropic()
+
+def run_agent(question: str) -> dict:
+    message = client.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": question}]
+    )
+    return {"response": message.content[0].text}
+```
+
+```python
+# Option C: LangGraph agent (the default example)
+from langgraph.prebuilt import create_react_agent
+# ... see agent.py
+```
+
+```python
+# Option D: Custom agent with no framework
+def run_agent(question: str) -> dict:
+    # Your custom logic here — RAG, multi-step, tool use, whatever
+    return {"response": answer, "tools_used": [...]}
+```
+
+The key contract: your agent function takes the inputs from your dataset and returns a dict that your evaluators can score.
+
+### Bring Your Own Dataset
+
+Replace `dataset.json` with your evaluation cases. The format is a JSON array of objects with `inputs` and `outputs`:
+
+```json
+[
+  {
+    "inputs": {"question": "Your input here"},
+    "outputs": {"answer": "Expected output", "any_other_field": "..."}
+  }
+]
+```
+
+The field names are up to you — just make sure your evaluators in `run_eval.py` reference the same fields. Some ideas:
+
+- **Q&A agent**: `inputs: {question}`, `outputs: {answer}`
+- **RAG agent**: `inputs: {question}`, `outputs: {answer, source_docs}`
+- **Code agent**: `inputs: {task}`, `outputs: {code, test_result}`
+- **Customer support**: `inputs: {ticket}`, `outputs: {response, category, priority}`
+
+### Bring Your Own Evaluators
+
+Modify the evaluators in `run_eval.py` to match your quality criteria. Each evaluator is a function that takes `(run, example)` and returns `{"score": number, "comment": "..."}`.
+
+```python
+# LLM-as-judge evaluator
+def my_evaluator(run, example) -> dict:
+    run_outputs = run.outputs or {}
+    example_outputs = example.outputs or {}
+    # Compare run_outputs to example_outputs using an LLM judge
+    grade = judge.invoke([...])
+    return {"score": grade.score, "comment": grade.reasoning}
+
+# Code-based evaluator
+def exact_match(run, example) -> dict:
+    actual = run.outputs.get("answer", "")
+    expected = example.outputs.get("answer", "")
+    return {"score": 1 if actual == expected else 0, "comment": ""}
+```
+
+After modifying evaluators, update `program.md` to reflect the new metric names in the output format and TSV columns.
+
+### Update program.md
+
+After customizing the above, update `program.md` to match:
+- Update the file list in the Setup section
+- Update the "Ideas to try" section with domain-specific suggestions
+- Update the output format section if your metrics changed
+- Update the TSV columns to match your evaluator names
+
 ## How It Works
-
-### The Agent (`agent.py`)
-
-A simple ReAct agent built with LangGraph. It has:
-- A system prompt (tune this!)
-- A set of tools (add/remove/modify these!)
-- An agent architecture (change this!)
-
-Everything in `agent.py` is fair game for the coding agent to modify.
 
 ### The Evaluation (`run_eval.py`)
 
-Uses LangSmith's `evaluate()` to run the agent against a fixed dataset and score it with multiple evaluators:
-- **Correctness**: Does the answer match the expected output?
-- **Helpfulness**: Is the response helpful and well-structured?
-- **Tool Usage**: Did the agent use tools appropriately?
+Uses LangSmith's `evaluate()` to run the agent against a persistent dataset and score it with your evaluators. The dataset is created once in LangSmith and reused across all experiments, so results accumulate and you can compare experiments side by side in the LangSmith UI.
 
-All traces are sent to LangSmith for full observability.
+All agent runs are traced in LangSmith for full observability — you can inspect exactly what happened in each run.
 
-### The Dataset (`dataset.json`)
+### The Experiment Loop (`program.md`)
 
-A fixed set of test cases with inputs and expected outputs. The coding agent cannot modify this — it's the ground truth.
-
-## Customization
-
-This example uses a simple Q&A agent with a web search tool. To adapt it for your own agent:
-
-1. **Replace `agent.py`** with your agent implementation
-2. **Replace `dataset.json`** with your evaluation cases
-3. **Update evaluators in `run_eval.py`** to match your quality criteria
-4. **Update `program.md`** to guide the coding agent on what to optimize
+The `program.md` file is the "skill" that drives the autonomous coding agent. It tells the agent to:
+1. Edit `agent.py` with an experimental idea
+2. Commit, run eval, check scores
+3. Keep improvements, discard regressions
+4. Log everything to `results.tsv`
+5. Never stop until interrupted
 
 ## License
 
