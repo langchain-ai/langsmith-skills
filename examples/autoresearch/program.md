@@ -40,7 +40,7 @@ Each experiment runs the agent against a fixed evaluation dataset using LangSmit
 
 **Cost** is a soft constraint. Using a more expensive model (e.g. gpt-4o instead of gpt-4o-mini) is acceptable for meaningful score gains, but don't use unnecessarily expensive configurations for marginal improvements.
 
-**Simplicity criterion**: All else being equal, simpler is better. A small improvement that adds ugly complexity is not worth it. Conversely, removing something and getting equal or better results is a great outcome — that's a simplification win.
+**Simplicity criterion**: All else being equal, simpler is better. A small improvement that adds ugly complexity is not worth it. Conversely, removing something and getting equal or better results is a great outcome — that's a simplification win. When evaluating whether to keep a change, weigh the complexity cost against the improvement magnitude. A 0.01 overall_score improvement that adds 30 lines of hacky prompt engineering? Probably not worth it. A 0.01 improvement from simplifying the prompt? Definitely keep. An improvement of ~0 but much simpler code? Keep.
 
 ## Output format
 
@@ -67,7 +67,7 @@ grep "^overall_score:" eval.log
 
 When an experiment is done, log it to `results.tsv` (tab-separated, NOT comma-separated).
 
-The TSV has a header row and 6 columns:
+The TSV has a header row and 7 columns:
 
 ```
 commit	overall_score	correctness	helpfulness	tool_usage	status	description
@@ -106,20 +106,24 @@ LOOP FOREVER:
    - Combining previous near-misses
 3. Edit `agent.py` with your experimental idea
 4. git commit
-5. Run the experiment: `python run_eval.py > eval.log 2>&1` (redirect everything — do NOT let output flood your context)
+5. Run the experiment: `python run_eval.py > eval.log 2>&1` (redirect everything — do NOT use tee or let output flood your context)
 6. Read out the results: `grep "^overall_score:\|^avg_" eval.log`
-7. If the grep output is empty, the run crashed. Run `tail -n 50 eval.log` to read the error and attempt a fix.
+7. If the grep output is empty, the run crashed. Run `tail -n 50 eval.log` to read the error and attempt a fix. If you can't get things to work after more than a few attempts, give up.
 8. Record the results in the TSV
 9. If overall_score improved (higher), you "advance" the branch, keeping the git commit
 10. If overall_score is equal or worse, you git reset back to where you started
 
-The idea is that you are a completely autonomous researcher trying things out. If they work, keep. If they don't, discard. And you're advancing the branch so that you can iterate.
+The idea is that you are a completely autonomous researcher trying things out. If they work, keep. If they don't, discard. And you're advancing the branch so that you can iterate. If you feel like you're getting stuck in some way, you can rewind further back but you should probably do this very very sparingly (if ever).
+
+**Timeout**: Each experiment should take ~2-5 minutes depending on API latency. If a run exceeds 10 minutes, kill it and treat it as a failure (discard and revert).
 
 **Crashes**: If a run crashes, use your judgment: If it's something dumb and easy to fix (e.g. a typo, a missing import), fix it and re-run. If the idea itself is fundamentally broken, just skip it, log "crash" as the status in the TSV, and move on.
 
 **NEVER STOP**: Once the experiment loop has begun (after the initial setup), do NOT pause to ask the human if you should continue. Do NOT ask "should I keep going?" or "is this a good stopping point?". The human might be asleep, or gone from a computer and expects you to continue working *indefinitely* until you are manually stopped. You are autonomous. If you run out of ideas, think harder — re-read the agent code, look at which eval cases are failing, try combining previous near-misses, try more radical changes. The loop runs until the human interrupts you, period.
 
 **LangSmith observability**: Every experiment run sends traces to LangSmith. After each run, you can check the experiment URL in the output to see detailed traces of how the agent handled each test case. Use this information to guide your next experiment — look at which cases the agent got wrong and why.
+
+As an example use case, a user might leave you running while they sleep. If each experiment takes you ~3 minutes then you can run approx 20/hour, for a total of about 160 over the duration of the average human sleep. The user then wakes up to experimental results, all completed by you while they slept!
 
 ## Ideas to try
 

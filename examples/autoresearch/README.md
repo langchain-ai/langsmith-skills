@@ -13,12 +13,13 @@ Give an AI coding agent a working agent implementation and an evaluation dataset
 │  1. Read agent.py + results so far                   │
 │  2. Propose a change (prompt, tools, architecture)   │
 │  3. Edit agent.py                                    │
-│  4. Run evaluation: python run_eval.py               │
-│  5. Parse scores from eval output                    │
-│  6. If improved → git commit (keep)                  │
+│  4. git commit                                       │
+│  5. Run evaluation: python run_eval.py               │
+│  6. Parse scores from eval output                    │
+│  7. If improved → keep commit                        │
 │     If worse   → git reset  (discard)                │
-│  7. Log result to results.tsv                        │
-│  8. Repeat forever                                   │
+│  8. Log result to results.tsv                        │
+│  9. Repeat forever                                   │
 │                                                      │
 └─────────────────────────────────────────────────────┘
 ```
