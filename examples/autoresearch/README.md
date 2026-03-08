@@ -75,13 +75,56 @@ python run_eval.py
 
 ### Running the Autonomous Agent
 
-Point your coding agent (Claude Code, Cursor, Codex, etc.) at this directory and prompt:
+Point your coding agent (Claude Code, Cursor, Codex, etc.) at this directory and send this prompt:
+
+<details>
+<summary><b>📋 Copy-paste prompt for Claude Code / Cursor / Codex</b></summary>
 
 ```
-Read program.md and let's kick off a new experiment! Do the setup first.
+I want you to autonomously optimize an AI agent using an eval-driven experiment loop.
+
+Here's how it works:
+- `agent.py` is the agent implementation. This is the ONLY file you modify.
+- `run_eval.py` is the evaluation harness. It runs the agent against a fixed dataset
+  and scores it using LangSmith. Do NOT modify this file.
+- `dataset.json` is the evaluation dataset. Do NOT modify this file.
+- `program.md` has detailed instructions for the experiment loop.
+
+Read program.md now and follow the setup instructions. Once setup is confirmed,
+start the experiment loop and run autonomously — do not stop to ask me questions.
+Keep experimenting until I interrupt you.
 ```
 
-The coding agent will then autonomously iterate on `agent.py`, running evals and tracking results.
+</details>
+
+The coding agent will then autonomously iterate on `agent.py`, running evals and tracking results. You can walk away and come back to a log of experiments in `results.tsv` and all traces in LangSmith.
+
+#### First time here? Use this prompt instead to set everything up from scratch:
+
+<details>
+<summary><b>📋 Copy-paste setup + run prompt</b></summary>
+
+```
+I want to set up and run autoresearch for agents — an autonomous experiment loop
+that optimizes an AI agent using LangSmith evals.
+
+First, help me get set up:
+1. Install dependencies: pip install langsmith langchain-openai langgraph
+2. Make sure these env vars are set: LANGSMITH_API_KEY, LANGSMITH_TRACING=true, OPENAI_API_KEY
+3. Verify the agent works: python agent.py "What is 2+2?"
+4. Run a baseline eval: python run_eval.py
+
+If I want to customize this for my own agent, walk me through:
+- Replacing agent.py with my own agent implementation
+- Replacing dataset.json with my own test cases
+- Updating the evaluators in run_eval.py for my use case
+
+Once everything is set up and the baseline looks good, read program.md and start
+the autonomous experiment loop. Do not stop to ask me questions — keep experimenting
+until I interrupt you.
+```
+
+</details>
 
 ## Bring Your Own Everything
 
