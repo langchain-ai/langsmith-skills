@@ -33,6 +33,19 @@ To link skills to a specific agent (e.g. Claude Code):
 npx skills add langchain-ai/langsmith-skills --agent claude-code --skill '*' --yes --global
 ```
 
+---
+
+### Claude Code Plugin
+
+Install directly as a [Claude Code plugin](https://code.claude.com/docs/en/plugins):
+
+```bash
+/plugin marketplace add langchain-ai/langsmith-skills
+/plugin install langsmith-skills@langsmith-skills
+```
+
+---
+
 ### Install Script (Claude Code & Deep Agents CLI only)
 
 Alternatively, clone the repo and use the install script:
