@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "langsmith-skills",
-      "source": ".",
+      "source": "./",
       "description": "Agent skills for observing and evaluating LLM applications with LangSmith",
       "homepage": "https://github.com/langchain-ai/langsmith-skills"
     }
