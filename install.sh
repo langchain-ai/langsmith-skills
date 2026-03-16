@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Install LangGraph + LangSmith skills for Claude Code or DeepAgents CLI
+# Install LangGraph + LangSmith skills for Claude Code or Deep Agents CLI
 
 set -e
 
