@@ -143,11 +143,13 @@ echo ""
 echo "Installing..."
 
 # Install LangSmith CLI (best-effort, don't block on failure)
-echo "Installing LangSmith CLI..."
-if curl -sSL https://raw.githubusercontent.com/langchain-ai/langsmith-cli/main/scripts/install.sh | sh 2>/dev/null; then
-    echo "✓ LangSmith CLI installed"
-else
-    echo "⚠️  LangSmith CLI installation failed (non-critical, continuing...)"
+if ! command -v langsmith &>/dev/null; then
+    echo "Installing LangSmith CLI..."
+    if curl -sSL https://raw.githubusercontent.com/langchain-ai/langsmith-cli/main/scripts/install.sh | sh 2>/dev/null; then
+        echo "✓ LangSmith CLI installed"
+    else
+        echo "⚠️  LangSmith CLI installation failed (non-critical, continuing...)"
+    fi
 fi
 
 # For Deep Agents global with --force, remove existing agent
