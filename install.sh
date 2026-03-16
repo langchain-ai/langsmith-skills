@@ -22,7 +22,7 @@ usage() {
     echo "Options:"
     echo "  --claude        Install for Claude Code (default)"
     echo "  --deepagents    Install for Deep Agents CLI"
-    echo "  --global, -g    Install globally (~/.claude or ~/.deepagents/langchain_agent)"
+    echo "  --global, -g    Install globally (~/.claude or ~/.deepagents/langsmith_agent)"
     echo "                  Default: install in current directory"
     echo "  --force, -f     Overwrite skills with same names as this package"
     echo "  --yes, -y       Skip confirmation prompts"
@@ -88,7 +88,7 @@ else
     # Deep Agents
     if [ "$GLOBAL" = true ]; then
         # Global: install as agent with persona
-        INSTALL_DIR="$HOME/.deepagents/langchain_agent"
+        INSTALL_DIR="$HOME/.deepagents/langsmith_agent"
         INCLUDE_AGENTS_MD=true
     else
         # Local: just skills, no agent persona
@@ -118,7 +118,7 @@ if [ "$TARGET" = "deepagents" ] && [ "$GLOBAL" = true ] && [ -d "$INSTALL_DIR" ]
     if [ "$FORCE" = true ]; then
         echo "⚠️  Existing agent found. Will overwrite (--force)."
     else
-        echo "❌ ERROR: Agent 'langchain_agent' already exists at $INSTALL_DIR"
+        echo "❌ ERROR: Agent 'langsmith_agent' already exists at $INSTALL_DIR"
         echo ""
         echo "To reinstall, use --force flag:"
         echo "  $0 --deepagents --global --force"
@@ -210,7 +210,7 @@ echo ""
 if [ "$TARGET" = "deepagents" ]; then
     if [ "$GLOBAL" = true ]; then
         echo "To use this agent, run:"
-        echo "  deepagents --agent langchain_agent"
+        echo "  deepagents --agent langsmith_agent"
         echo ""
     fi
     echo "For usage, configuration, and API key setup, see the CLI docs:"
