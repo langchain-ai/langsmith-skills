@@ -54,18 +54,22 @@ Alternatively, clone the repo and use the install script:
 # Install for Claude Code in current directory (default)
 ./install.sh
 
+# Install for Claude Code in a specific project directory
+./install.sh ~/my-project
+
 # Install for Claude Code globally
 ./install.sh --global
 
-# Install for DeepAgents CLI in current directory
-./install.sh --deepagents
+# Install for DeepAgents CLI in a specific project directory
+./install.sh --deepagents ~/my-project
 
 # Install for DeepAgents CLI globally (includes agent persona)
 ./install.sh --deepagents --global
 ```
 
-| Flag | Description |
+| Flag / Argument | Description |
 |------|-------------|
+| `DIRECTORY` | Target project directory (default: current directory, ignored with `--global`) |
 | `--claude` | Install for Claude Code (default) |
 | `--deepagents` | Install for DeepAgents CLI |
 | `--global`, `-g` | Install globally instead of current directory |
