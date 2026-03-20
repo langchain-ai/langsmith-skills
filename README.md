@@ -4,6 +4,8 @@
 
 Agent skills for observing and evaluating LLM applications with [LangSmith](https://smith.langchain.com/). Query traces, build evaluation datasets, and create custom evaluators — all from your coding agent.
 
+> Looking for skills to **build and improve** agents with LangChain, LangGraph, or Deep Agents? See [langchain-skills](https://github.com/langchain-ai/langchain-skills).
+
 ## Supported Coding Agents
 
 These skills can be installed for any agent supported by [`skills.sh`](https://skills.sh), including Claude Code, [Deep Agents CLI](https://docs.langchain.com/oss/python/deepagents/cli/overview), Cursor, Windsurf, Goose, and [many more](https://github.com/vercel-labs/skills).
