@@ -11,9 +11,14 @@ Two main topics: **adding tracing** to your application, and **querying traces**
 Environment Variables
 
 ```bash
-LANGSMITH_API_KEY=lsv2_pt_your_api_key_here          # Required
+LANGSMITH_API_KEY=lsv2_pt_your_api_key_here          # REQUIRED
 LANGSMITH_PROJECT=your-project-name                   # Optional: default project
 LANGSMITH_WORKSPACE_ID=your-workspace-id              # Optional: for org-scoped keys
+```
+
+Authentication is REQUIRED: either set the `LANGSMITH_API_KEY` environment variable, or pass the `--api-key` global flag to CLI commands (preferred):
+```bash
+langsmith --api-key $LANGSMITH_API_KEY trace list --project my-project
 ```
 
 **IMPORTANT:** Always check the environment variables or `.env` file for `LANGSMITH_PROJECT` before querying or interacting with LangSmith. This tells you which project contains the relevant traces and data. If the LangSmith project is not available, use your best judgement to identify the right one.
