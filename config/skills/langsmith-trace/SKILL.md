@@ -16,9 +16,9 @@ LANGSMITH_PROJECT=your-project-name                   # Optional: default projec
 LANGSMITH_WORKSPACE_ID=your-workspace-id              # Optional: for org-scoped keys
 ```
 
-Authentication is REQUIRED: either set the `LANGSMITH_API_KEY` environment variable, or pass the `--api-key` global flag to CLI commands (preferred):
+Authentication is REQUIRED: either set the `LANGSMITH_API_KEY` environment variable, or pass the `--api-key` flag to CLI commands (preferred):
 ```bash
-langsmith --api-key $LANGSMITH_API_KEY trace list --project my-project
+langsmith trace list --project my-project --api-key $LANGSMITH_API_KEY
 ```
 
 **IMPORTANT:** Always check the environment variables or `.env` file for `LANGSMITH_PROJECT` before querying or interacting with LangSmith. This tells you which project contains the relevant traces and data. If the LangSmith project is not available, use your best judgement to identify the right one.
@@ -196,30 +196,30 @@ Query traces using the `langsmith` CLI. Commands are language-agnostic.
 
 ```bash
 # List recent traces (most common operation)
-langsmith trace list --limit 10 --project my-project
+langsmith trace list --limit 10 --project my-project --api-key $LANGSMITH_API_KEY
 
 # List traces with metadata (timing, tokens, costs)
-langsmith trace list --limit 10 --include-metadata
+langsmith trace list --limit 10 --include-metadata --api-key $LANGSMITH_API_KEY
 
 # Filter traces by time
-langsmith trace list --last-n-minutes 60
-langsmith trace list --since 2025-01-20T10:00:00Z
+langsmith trace list --last-n-minutes 60 --api-key $LANGSMITH_API_KEY
+langsmith trace list --since 2025-01-20T10:00:00Z --api-key $LANGSMITH_API_KEY
 
 # Get specific trace with full hierarchy
-langsmith trace get <trace-id>
+langsmith trace get <trace-id> --api-key $LANGSMITH_API_KEY
 
 # List traces and show hierarchy inline
-langsmith trace list --limit 5 --show-hierarchy
+langsmith trace list --limit 5 --show-hierarchy --api-key $LANGSMITH_API_KEY
 
 # Export traces to JSONL (one file per trace, includes all runs)
-langsmith trace export ./traces --limit 20 --full
+langsmith trace export ./traces --limit 20 --full --api-key $LANGSMITH_API_KEY
 
 # Filter traces by performance
-langsmith trace list --min-latency 5.0 --limit 10    # Slow traces (>= 5s)
-langsmith trace list --error --last-n-minutes 60     # Failed traces
+langsmith trace list --min-latency 5.0 --limit 10 --api-key $LANGSMITH_API_KEY    # Slow traces (>= 5s)
+langsmith trace list --error --last-n-minutes 60 --api-key $LANGSMITH_API_KEY     # Failed traces
 
 # List specific run types (flat list)
-langsmith run list --run-type llm --limit 20
+langsmith run list --run-type llm --limit 20 --api-key $LANGSMITH_API_KEY
 ```
 </querying_traces>
 
@@ -246,7 +246,7 @@ All commands support these filters (all AND together):
 
 ```bash
 # Filter traces by feedback score using raw LangSmith query
-langsmith trace list --filter 'and(eq(feedback_key, "correctness"), gte(feedback_score, 0.8))'
+langsmith trace list --filter 'and(eq(feedback_key, "correctness"), gte(feedback_score, 0.8))' --api-key $LANGSMITH_API_KEY
 ```
 </filters>
 

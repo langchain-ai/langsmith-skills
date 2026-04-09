@@ -16,9 +16,9 @@ LANGSMITH_PROJECT=your-project-name                   # Check this to know which
 LANGSMITH_WORKSPACE_ID=your-workspace-id              # Optional: for org-scoped keys
 ```
 
-Authentication is REQUIRED: either set the `LANGSMITH_API_KEY` environment variable, or pass the `--api-key` global flag to CLI commands (preferred):
+Authentication is REQUIRED: either set the `LANGSMITH_API_KEY` environment variable, or pass the `--api-key` flag to CLI commands (preferred):
 ```bash
-langsmith --api-key $LANGSMITH_API_KEY dataset list
+langsmith dataset list --api-key $LANGSMITH_API_KEY
 ```
 
 **IMPORTANT:** Always check the environment variables or `.env` file for `LANGSMITH_PROJECT` before querying or interacting with LangSmith. This tells you which project contains the relevant traces and data. If the LangSmith project is not available, use your best judgement to identify the right one.
@@ -94,7 +94,7 @@ Export traces first, then process them into dataset format using code:
 
 ```bash
 # 1. Export traces to JSONL files
-langsmith trace export ./traces --project my-project --limit 20 --full
+langsmith trace export ./traces --project my-project --limit 20 --full --api-key $LANGSMITH_API_KEY
 ```
 
 <python>
@@ -153,7 +153,7 @@ writeFileSync("/tmp/dataset.json", JSON.stringify(examples, null, 2));
 
 ```bash
 # Upload local JSON file as a dataset
-langsmith dataset upload /tmp/dataset.json --name "My Evaluation Dataset"
+langsmith dataset upload /tmp/dataset.json --name "My Evaluation Dataset" --api-key $LANGSMITH_API_KEY
 ```
 
 ### Using the SDK Directly
@@ -224,34 +224,34 @@ await client.createExamples({
 
 ```bash
 # List all datasets
-langsmith dataset list
+langsmith dataset list --api-key $LANGSMITH_API_KEY
 
 # Get dataset details
-langsmith dataset get "My Dataset"
+langsmith dataset get "My Dataset" --api-key $LANGSMITH_API_KEY
 
 # Create an empty dataset
-langsmith dataset create --name "New Dataset" --description "For evaluation"
+langsmith dataset create --name "New Dataset" --description "For evaluation" --api-key $LANGSMITH_API_KEY
 
 # Upload a local JSON file
-langsmith dataset upload /tmp/dataset.json --name "My Dataset"
+langsmith dataset upload /tmp/dataset.json --name "My Dataset" --api-key $LANGSMITH_API_KEY
 
 # Export a dataset to local file
-langsmith dataset export "My Dataset" /tmp/exported.json --limit 100
+langsmith dataset export "My Dataset" /tmp/exported.json --limit 100 --api-key $LANGSMITH_API_KEY
 
 # Delete a dataset
-langsmith dataset delete "My Dataset"
+langsmith dataset delete "My Dataset" --api-key $LANGSMITH_API_KEY
 
 # List examples in a dataset
-langsmith example list --dataset "My Dataset" --limit 10
+langsmith example list --dataset "My Dataset" --limit 10 --api-key $LANGSMITH_API_KEY
 
 # Add an example
 langsmith example create --dataset "My Dataset" \
   --inputs '{"query": "test"}' \
-  --outputs '{"answer": "result"}'
+  --outputs '{"answer": "result"}' --api-key $LANGSMITH_API_KEY
 
 # List experiments
-langsmith experiment list --dataset "My Dataset"
-langsmith experiment get "eval-v1"
+langsmith experiment list --dataset "My Dataset" --api-key $LANGSMITH_API_KEY
+langsmith experiment get "eval-v1" --api-key $LANGSMITH_API_KEY
 ```
 </script_usage>
 
@@ -260,22 +260,22 @@ Complete workflow from traces to uploaded LangSmith dataset:
 
 ```bash
 # 1. Export traces from LangSmith
-langsmith trace export ./traces --project my-project --limit 20 --full
+langsmith trace export ./traces --project my-project --limit 20 --full --api-key $LANGSMITH_API_KEY
 
 # 2. Process traces into dataset format (using Python/JS code)
 # See "Creating Datasets" section above
 
 # 3. Upload to LangSmith
-langsmith dataset upload /tmp/final_response.json --name "Skills: Final Response"
-langsmith dataset upload /tmp/trajectory.json --name "Skills: Trajectory"
+langsmith dataset upload /tmp/final_response.json --name "Skills: Final Response" --api-key $LANGSMITH_API_KEY
+langsmith dataset upload /tmp/trajectory.json --name "Skills: Trajectory" --api-key $LANGSMITH_API_KEY
 
 # 4. Verify upload
-langsmith dataset list
-langsmith dataset get "Skills: Final Response"
-langsmith example list --dataset "Skills: Final Response" --limit 3
+langsmith dataset list --api-key $LANGSMITH_API_KEY
+langsmith dataset get "Skills: Final Response" --api-key $LANGSMITH_API_KEY
+langsmith example list --dataset "Skills: Final Response" --limit 3 --api-key $LANGSMITH_API_KEY
 
 # 5. Run experiments
-langsmith experiment list --dataset "Skills: Final Response"
+langsmith experiment list --dataset "Skills: Final Response" --api-key $LANGSMITH_API_KEY
 ```
 </example_workflow>
 
