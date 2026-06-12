@@ -10,6 +10,7 @@ This project uses skills that contain up-to-date patterns and working reference 
 - **langsmith-trace** - Invoke for ANY trace querying or analysis
 - **langsmith-dataset** - Invoke for ANY dataset creation from traces
 - **langsmith-evaluator** - Invoke for ANY evaluator creation
+- **langsmith-agent-optimizer** - Invoke when improving a production agent from its traced sessions (harness fixes: prompt, tools, capabilities)
 
 ## Debugging Flow: Build → Trace → Dataset → Evaluate
 
