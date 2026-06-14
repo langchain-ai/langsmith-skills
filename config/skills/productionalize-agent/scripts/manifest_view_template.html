@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ADLC — agent state</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Crect%20width%3D%2732%27%20height%3D%2732%27%20rx%3D%277%27%20fill%3D%27%230D1322%27%2F%3E%3Cg%20transform%3D%27translate%284%2C4%29%27%20fill%3D%27none%27%20stroke%3D%27%237FC8FF%27%20stroke-width%3D%271.8%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M16.023%209.348h4.992v-.001M2.985%2019.644v-4.992m0%200h4.992m-4.993%200%203.181%203.183a8.25%208.25%200%200%200%2013.803-3.7M4.031%209.865a8.25%208.25%200%200%201%2013.803-3.7l3.181%203.182m0-4.991v4.99%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#030710;--bg-2:#0D1322;--card:#0D1322;--card-2:#161F34;--border:rgba(255,255,255,.08);--text:#F2FAFF;--muted:rgba(255,255,255,.6);--accent:#7FC8FF;--green:#8CDB9B;--amber:#FBB0A5;--pend:#2F4B68}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;font-weight:300;background:var(--bg);color:var(--text);line-height:1.55;padding:40px 20px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:920px;margin:0 auto}
+h1{font-size:24px;font-weight:300;letter-spacing:-.02em}
+.sub{color:var(--muted);font-size:14px;margin-top:4px}
+.eyebrow{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:500;margin:30px 0 12px}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+/* stepper */
+.stepper{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.step{flex:1 1 0;min-width:120px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.step .glyph{font-size:13px;font-weight:600}
+.step .name{font-size:14px;font-weight:500;margin-top:2px}
+.step.done{border-color:rgba(140,219,155,.4)} .step.done .glyph{color:var(--green)}
+.step.current{border-color:rgba(127,200,255,.6);box-shadow:0 0 0 1px rgba(127,200,255,.25) inset} .step.current .glyph{color:var(--accent)}
+.step.pending .glyph,.step.pending .name{color:var(--pend)}
+.substep{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12px;border:1px solid var(--border);border-radius:999px;padding:4px 11px;color:var(--muted)}
+.chip.done{color:var(--green);border-color:rgba(140,219,155,.35)} .chip.current{color:var(--accent);border-color:rgba(127,200,255,.5)}
+/* cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-top:12px}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 22px}
+.kv .k{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kv .v{font-size:14px;font-weight:500}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font-family:'IBM Plex Mono',ui-monospace,monospace;color:var(--accent);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:8px 10px;border-bottom:1px solid var(--border)}
+td{padding:9px 10px;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top}
+td b{color:var(--text);font-weight:500}
+a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+.list li{list-style:none;padding:7px 0 7px 22px;position:relative;color:var(--muted);font-size:14px}
+.list li::before{content:"";position:absolute;left:3px;top:13px;width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.lm-ph{color:var(--accent);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.lm-links{margin-top:3px;font-size:13px}
+.runcmd{font-family:'IBM Plex Mono',ui-monospace,monospace;color:var(--accent);font-size:15px}
+.runsub{color:var(--muted);font-size:13px;margin-left:12px}
+.rname{color:var(--muted);font-size:12px;margin-top:2px}
+.rstat{color:var(--muted)}
+.empty{color:var(--pend);font-size:13px}
+
+/* Heroicons v2.1.5 (CSS mask) */
+.ico{display:inline-block;width:1em;height:1em;vertical-align:-0.15em;background:currentColor;-webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}
+.ico-bolt{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22m3.75%2013.5%2010.5-11.25L12%2010.5h8.25L9.75%2021.75%2012%2013.5H3.75Z%22%2F%3E%3C%2Fsvg%3E")}
+.ico-arrow-path{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M16.023%209.348h4.992v-.001M2.985%2019.644v-4.992m0%200h4.992m-4.993%200%203.181%203.183a8.25%208.25%200%200%200%2013.803-3.7M4.031%209.865a8.25%208.25%200%200%201%2013.803-3.7l3.181%203.182m0-4.991v4.99%22%2F%3E%3C%2Fsvg%3E")}
+.ico-rocket-launch{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M15.59%2014.37a6%206%200%200%201-5.84%207.38v-4.8m5.84-2.58a14.98%2014.98%200%200%200%206.16-12.12A14.98%2014.98%200%200%200%209.631%208.41m5.96%205.96a14.926%2014.926%200%200%201-5.841%202.58m-.119-8.54a6%206%200%200%200-7.381%205.84h4.8m2.581-5.84a14.927%2014.927%200%200%200-2.58%205.84m2.699%202.7c-.103.021-.207.041-.311.06a15.09%2015.09%200%200%201-2.448-2.448%2014.9%2014.9%200%200%201%20.06-.312m-2.24%202.39a4.493%204.493%200%200%200-1.757%204.306%204.493%204.493%200%200%200%204.306-1.758M16.5%209a1.5%201.5%200%201%201-3%200%201.5%201.5%200%200%201%203%200Z%22%2F%3E%3C%2Fsvg%3E")}
+.ico-viewfinder-circle{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M7.5%203.75H6A2.25%202.25%200%200%200%203.75%206v1.5M16.5%203.75H18A2.25%202.25%200%200%201%2020.25%206v1.5m0%209V18A2.25%202.25%200%200%201%2018%2020.25h-1.5m-9%200H6A2.25%202.25%200%200%201%203.75%2018v-1.5M15%2012a3%203%200%201%201-6%200%203%203%200%200%201%206%200Z%22%2F%3E%3C%2Fsvg%3E")}
+.ico-face-frown{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M15.182%2016.318A4.486%204.486%200%200%200%2012.016%2015a4.486%204.486%200%200%200-3.198%201.318M21%2012a9%209%200%201%201-18%200%209%209%200%200%201%2018%200ZM9.75%209.75c0%20.414-.168.75-.375.75S9%2010.164%209%209.75%209.168%209%209.375%209s.375.336.375.75Zm-.375%200h.008v.015h-.008V9.75Zm5.625%200c0%20.414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75Zm-.375%200h.008v.015h-.008V9.75Z%22%2F%3E%3C%2Fsvg%3E")}
+.ico-document-text{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M19.5%2014.25v-2.625a3.375%203.375%200%200%200-3.375-3.375h-1.5A1.125%201.125%200%200%201%2013.5%207.125v-1.5a3.375%203.375%200%200%200-3.375-3.375H8.25m0%2012.75h7.5m-7.5%203H12M10.5%202.25H5.625c-.621%200-1.125.504-1.125%201.125v17.25c0%20.621.504%201.125%201.125%201.125h12.75c.621%200%201.125-.504%201.125-1.125V11.25a9%209%200%200%200-9-9Z%22%2F%3E%3C%2Fsvg%3E")}
+.ico-academic-cap{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M4.26%2010.147a60.438%2060.438%200%200%200-.491%206.347A48.62%2048.62%200%200%201%2012%2020.904a48.62%2048.62%200%200%201%208.232-4.41%2060.46%2060.46%200%200%200-.491-6.347m-15.482%200a50.636%2050.636%200%200%200-2.658-.813A59.906%2059.906%200%200%201%2012%203.493a59.903%2059.903%200%200%201%2010.399%205.84c-.896.248-1.783.52-2.658.814m-15.482%200A50.717%2050.717%200%200%201%2012%2013.489a50.702%2050.702%200%200%201%207.74-3.342M6.75%2015a.75.75%200%201%200%200-1.5.75.75%200%200%200%200%201.5Zm0%200v-3.675A55.378%2055.378%200%200%201%2012%208.443m-7.007%2011.55A5.981%205.981%200%200%200%206.75%2015.75v-1.5%22%2F%3E%3C%2Fsvg%3E")}
+.ico-link{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M13.19%208.688a4.5%204.5%200%200%201%201.242%207.244l-4.5%204.5a4.5%204.5%200%200%201-6.364-6.364l1.757-1.757m13.35-.622%201.757-1.757a4.5%204.5%200%200%200-6.364-6.364l-4.5%204.5a4.5%204.5%200%200%200%201.242%207.244%22%2F%3E%3C%2Fsvg%3E")}
+.ico-beaker{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M9.75%203.104v5.714a2.25%202.25%200%200%201-.659%201.591L5%2014.5M9.75%203.104c-.251.023-.501.05-.75.082m.75-.082a24.301%2024.301%200%200%201%204.5%200m0%200v5.714c0%20.597.237%201.17.659%201.591L19.8%2015.3M14.25%203.104c.251.023.501.05.75.082M19.8%2015.3l-1.57.393A9.065%209.065%200%200%201%2012%2015a9.065%209.065%200%200%200-6.23-.693L5%2014.5m14.8.8%201.402%201.402c1.232%201.232.65%203.318-1.067%203.611A48.309%2048.309%200%200%201%2012%2021c-2.773%200-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5%2014.5%22%2F%3E%3C%2Fsvg%3E")}
+.ico-signal{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M9.348%2014.652a3.75%203.75%200%200%201%200-5.304m5.304%200a3.75%203.75%200%200%201%200%205.304m-7.425%202.121a6.75%206.75%200%200%201%200-9.546m9.546%200a6.75%206.75%200%200%201%200%209.546M5.106%2018.894c-3.808-3.807-3.808-9.98%200-13.788m13.788%200c3.808%203.807%203.808%209.98%200%2013.788M12%2012h.008v.008H12V12Zm.375%200a.375.375%200%201%201-.75%200%20.375.375%200%200%201%20.75%200Z%22%2F%3E%3C%2Fsvg%3E")}
+.ico-puzzle-piece{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M14.25%206.087c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003%200-1.036-1.007-1.875-2.25-1.875s-2.25.84-2.25%201.875c0%20.369.128.713.349%201.003.215.283.401.604.401.959v0a.64.64%200%200%201-.657.643%2048.39%2048.39%200%200%201-4.163-.3c.186%201.613.293%203.25.315%204.907a.656.656%200%200%201-.658.663v0c-.355%200-.676-.186-.959-.401a1.647%201.647%200%200%200-1.003-.349c-1.036%200-1.875%201.007-1.875%202.25s.84%202.25%201.875%202.25c.369%200%20.713-.128%201.003-.349.283-.215.604-.401.959-.401v0c.31%200%20.555.26.532.57a48.039%2048.039%200%200%201-.642%205.056c1.518.19%203.058.309%204.616.354a.64.64%200%200%200%20.657-.643v0c0-.355-.186-.676-.401-.959a1.647%201.647%200%200%201-.349-1.003c0-1.035%201.008-1.875%202.25-1.875%201.243%200%202.25.84%202.25%201.875%200%20.369-.128.713-.349%201.003-.215.283-.4.604-.4.959v0c0%20.333.277.599.61.58a48.1%2048.1%200%200%200%205.427-.63%2048.05%2048.05%200%200%200%20.582-4.717.532.532%200%200%200-.533-.57v0c-.355%200-.676.186-.959.401-.29.221-.634.349-1.003.349-1.035%200-1.875-1.007-1.875-2.25s.84-2.25%201.875-2.25c.37%200%20.713.128%201.003.349.283.215.604.401.96.401v0a.656.656%200%200%200%20.658-.663%2048.422%2048.422%200%200%200-.37-5.36c-1.886.342-3.81.574-5.766.689a.578.578%200%200%201-.61-.58v0Z%22%2F%3E%3C%2Fsvg%3E")}
+.ico-hand-thumb-down{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M7.498%2015.25H4.372c-1.026%200-1.945-.694-2.054-1.715a12.137%2012.137%200%200%201-.068-1.285c0-2.848.992-5.464%202.649-7.521C5.287%204.247%205.886%204%206.504%204h4.016a4.5%204.5%200%200%201%201.423.23l3.114%201.04a4.5%204.5%200%200%200%201.423.23h1.294M7.498%2015.25c.618%200%20.991.724.725%201.282A7.471%207.471%200%200%200%207.5%2019.75%202.25%202.25%200%200%200%209.75%2022a.75.75%200%200%200%20.75-.75v-.633c0-.573.11-1.14.322-1.672.304-.76.93-1.33%201.653-1.715a9.04%209.04%200%200%200%202.86-2.4c.498-.634%201.226-1.08%202.032-1.08h.384m-10.253%201.5H9.7m8.075-9.75c.01.05.027.1.05.148.593%201.2.925%202.55.925%203.977%200%201.487-.36%202.89-.999%204.125m.023-8.25c-.076-.365.183-.75.575-.75h.908c.889%200%201.713.518%201.972%201.368.339%201.11.521%202.287.521%203.507%200%201.553-.295%203.036-.831%204.398-.306.774-1.086%201.227-1.918%201.227h-1.053c-.472%200-.745-.556-.5-.96a8.95%208.95%200%200%200%20.303-.54%22%2F%3E%3C%2Fsvg%3E")}
+.ico-clock{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M12%206v6h4.5m4.5%200a9%209%200%201%201-18%200%209%209%200%200%201%2018%200Z%22%2F%3E%3C%2Fsvg%3E")}
+.ico-book-open{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M12%206.042A8.967%208.967%200%200%200%206%203.75c-1.052%200-2.062.18-3%20.512v14.25A8.987%208.987%200%200%201%206%2018c2.305%200%204.408.867%206%202.292m0-14.25a8.966%208.966%200%200%201%206-2.292c1.052%200%202.062.18%203%20.512v14.25A8.987%208.987%200%200%200%2018%2018a8.967%208.967%200%200%200-6%202.292m0-14.25v14.25%22%2F%3E%3C%2Fsvg%3E")}
+.eyebrow .ico{color:var(--accent);margin-right:6px}
+</style></head><body><div class="wrap" id="app"></div>
+<script>
+const MANIFEST = __MANIFEST_JSON__;
+const PHASES = ["scope","build","test","deploy","monitor","improve"];
+const TSUB = [["find-issues","Dataset"],["write-tests","Evaluators"],["score","Score"],["align","Align evals"],["fix-green","Fix"],["optimize","Optimize"],["harden","Harden"]];
+const el=(h)=>{const t=document.createElement("template");t.innerHTML=h.trim();return t.content.firstChild;};
+const esc=(s)=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const linkify=(s)=>{const bare=(t)=>esc(t).replace(/(https?:\/\/[^\s]+)/g,'<a href="$1">$1</a>');let out="",last=0,m;const re=/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;while((m=re.exec(s))){out+=bare(s.slice(last,m.index))+`<a href="${esc(m[2])}">${esc(m[1])}</a>`;last=m.index+m[0].length;}return out+bare(s.slice(last));};
+const app=document.getElementById("app");
+const a=MANIFEST.answers||{};
+const phaseIdx=PHASES.indexOf(MANIFEST.phase);
+
+app.appendChild(el(`<div><h1>${esc(a.description||"Agent")}</h1>
+  <div class="sub mono">phase: ${esc(MANIFEST.phase||"?")} · session ${esc(MANIFEST.session_id||"")} ${MANIFEST.deployed===false?"· not deployed":""}</div></div>`));
+
+// ADLC stepper
+app.appendChild(el('<div class="eyebrow">ADLC</div>'));
+const stp=el('<div class="stepper"></div>');
+PHASES.forEach((p,i)=>{const st=i<phaseIdx?"done":i===phaseIdx?"current":"pending";
+  const g=i<phaseIdx?"✓":i===phaseIdx?"▶":"○";
+  stp.appendChild(el(`<div class="step ${st}"><div class="glyph">${g}</div><div class="name">${p[0].toUpperCase()+p.slice(1)}</div></div>`));});
+app.appendChild(stp);
+
+// Test sub-stepper
+if(MANIFEST.test_substep){const cur=MANIFEST.test_substep;const ci=TSUB.findIndex(s=>s[0]===cur);
+  const sub=el('<div class="substep"></div>');
+  TSUB.forEach((s,i)=>{const done=cur==="done"||i<ci;const isc=i===ci;
+    sub.appendChild(el(`<span class="chip ${done?"done":isc?"current":""}">${done?"✓ ":isc?"▶ ":""}${s[1]}</span>`));});
+  app.appendChild(el('<div class="eyebrow">Test sub-steps</div>'));app.appendChild(sub);}
+
+// Answers
+app.appendChild(el('<div class="eyebrow">Configuration</div>'));
+const HIDE=new Set(["build_delivers","description","manage_via","backend"]);
+const VLABEL={audience:{external:"external users",myself:"myself",team:"team"}};
+const fmt=(k,v)=>v==null?'<span class="empty">—</span>':(VLABEL[k]&&VLABEL[k][v])?esc(VLABEL[k][v]):Array.isArray(v)?v.map(esc).join(", "):typeof v==="object"?esc(JSON.stringify(v)):esc(v);
+const card=el('<div class="card"><div class="kv"></div></div>');const kv=card.querySelector(".kv");
+Object.entries(a).filter(([k])=>!HIDE.has(k)).forEach(([k,v])=>kv.appendChild(el(`<div><div class="k">${esc(k.replace(/_/g," "))}</div><div class="v">${fmt(k,v)}</div></div>`)));
+app.appendChild(card);
+
+// How to run
+app.appendChild(el('<div class="eyebrow">How to run</div>'));
+app.appendChild(el(a.local_run_ready
+  ? '<div class="card"><span class="runcmd">make run</span><span class="runsub">starts the backend + frontend locally</span></div>'
+  : '<div class="card empty">Not set up yet</div>'));
+
+// Resources
+const res=(MANIFEST.resources||[]).slice().sort((a,b)=>{const o=p=>{const i=PHASES.indexOf(p);return i<0?99:i};return o(a.phase)-o(b.phase);});
+app.appendChild(el('<div class="eyebrow">Resources created</div>'));
+if(res.length){const t=el('<div class="card"><table><thead><tr><th>Phase</th><th>Resource</th></tr></thead><tbody></tbody></table></div>');
+  const tb=t.querySelector("tbody");
+  const LL={project_dashboard:"LangSmith Monitoring",online_evaluators:"LangSmith Online Evals",dataset:"LangSmith Dataset",experiment:"LangSmith Experiment",annotation_queue:"LangSmith Annotation Queue",automation_rule:"LangSmith Automation Rule",alerts:"LangSmith Alerts",frontend:"Open app"};
+  res.forEach(r=>{const url=r.url||"";const isUrl=/^https?:/.test(url);
+    const tlabel=LL[r.type]||r.type||"resource";
+    const status=r.status?` <span class="mono rstat">(${esc(r.status)})</span>`:"";
+    const name=r.name?`<div class="rname">${esc(r.name)}</div>`:"";
+    let cell;
+    if(isUrl){cell=`<a href="${esc(url)}">${esc(tlabel)} →</a>${status}${name}`;}
+    else if(url){cell=`<b>${esc(r.name||tlabel)}</b>${status}<div class="rname mono">${esc(url)}</div>`;}
+    else{cell=`<b>${esc(r.name||tlabel)}</b>${status}`;}
+    tb.appendChild(el(`<tr><td>${esc(r.phase||"")}</td><td>${cell}</td></tr>`));});
+  app.appendChild(t);}else app.appendChild(el('<div class="card empty">none yet</div>'));
+
+// Reminders + read later
+const rem=MANIFEST.pending_reminders||[];const rd=MANIFEST.read_later||[];
+if(rem.length){app.appendChild(el('<div class="eyebrow"><i class="ico ico-clock"></i>Deferred reminders</div>'));
+  const u=el('<ul class="list rem card"></ul>');rem.forEach(x=>u.appendChild(el(`<li>${linkify(typeof x==="string"?x:JSON.stringify(x))}</li>`)));app.appendChild(u);}
+if(rd.length){app.appendChild(el('<div class="eyebrow"><i class="ico ico-book-open"></i>Learn more</div>'));
+  const u=el('<ul class="list read card"></ul>');
+  rd.forEach(x=>{
+    if(typeof x==="string"){u.appendChild(el(`<li>${linkify(x)}</li>`));return;}
+    const ph=x.phase?`<span class="mono lm-ph">${esc(x.phase)}</span> · `:"";
+    const ti=esc(x.title||x.topic||"Saved to learn more");
+    const ls=(x.links||(x.url?[x.url]:[])).map(l=>{const url=typeof l==="string"?l:(l.url||"");const lab=typeof l==="string"?l:(l.label||l.url||"");return url?`<a href="${esc(url)}">${esc(lab)}</a>`:"";}).filter(Boolean).join(" · ");
+    u.appendChild(el(`<li>${ph}<b>${ti}</b>${ls?`<div class="lm-links">${ls}</div>`:""}</li>`));
+  });
+  app.appendChild(u);}
+</script></body></html>

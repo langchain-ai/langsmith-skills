@@ -1,0 +1,2 @@
+# Per-user local state (shared across projects, never committed)
+user-state.toml

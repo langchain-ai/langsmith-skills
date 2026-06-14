@@ -1,7 +1,7 @@
 {
   "name": "langsmith-skills",
-  "version": "0.1.0",
-  "description": "LangSmith skills for tracing, dataset management, and evaluation pipelines",
+  "version": "0.2.0",
+  "description": "LangSmith skills for tracing, dataset management, evaluation, and the full agent development life cycle (build → test → deploy → monitor → improve)",
   "author": {
     "name": "LangChain",
     "url": "https://langchain.com"

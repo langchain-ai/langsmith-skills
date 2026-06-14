@@ -11,6 +11,15 @@ This project uses skills that contain up-to-date patterns and working reference 
 - **langsmith-dataset** - Invoke for ANY dataset creation from traces
 - **langsmith-evaluator** - Invoke for ANY evaluator creation
 
+### ADLC Skills (idea → production)
+A guided suite that takes an agent through the **Agent Development Life Cycle** (Scope → Build → Test → Deploy → Monitor → Improve). Each phase is a standalone drop-in command; the orchestrator runs them in order. They build on the three skills above.
+- **productionalize-agent** - The ORCHESTRATOR. Invoke for the full guided journey from idea to a deployed, monitored agent. Owns shared state (`.adlc.json`) + conventions.
+- **build-agent** - Scope + Build: scaffold a new agent (or instrument an existing one) until traces flow to LangSmith.
+- **test-agent** - Test: build a dataset + evaluators you trust (align them), then red→green the agent. TDD for agents.
+- **deploy-agent** - Deploy: a thin deployment-client frontend + auth, shipped to LangSmith Deployment or your own infra.
+- **monitor-agent** - Monitor: online evaluators on sampled traffic + dashboards + alerts.
+- **improve-agent** - Improve: failing-trace + 👎-feedback → annotation queue → dataset → CI loop.
+
 ## Debugging Flow: Build → Trace → Dataset → Evaluate
 
 When stuck or debugging, use this powerful workflow:

@@ -1,0 +1,108 @@
+{
+  "_comment": "Static teaching content for the ADLC wizard. The orchestrator shows `teaser` at each phase transition (with Learn more / Continue); `what`/`in_it`/`why` are the full explainer behind 'Learn more'. Bundled + vetted — never LLM-generated. teach.py renders these.",
+  "phases": [
+    {
+      "key": "scope",
+      "title": "Scope",
+      "teaser": "The fastest way to waste a week is to build the wrong thing. A couple of questions decide most of it.",
+      "what": "Figure out what you're really building and who it's for — before any code.",
+      "in_it": [
+        "What kind: Agent (→ deepagents) / Workflow (→ langgraph) / Prompt (→ a single model call)",
+        "Audience — the branch: myself/team → fleet & exit early; customers/external → the full ADLC",
+        "A plain-language description + where the agent's knowledge comes from"
+      ],
+      "why": "Wrong scope wastes the whole build. Audience decides the entire path — a quick fleet agent vs the full production cycle — and collapses ~half the later defaults.",
+      "links": [
+        {"label": "Deep Agents — overview", "url": "https://docs.langchain.com/oss/python/deepagents/overview"},
+        {"label": "Context engineering concepts", "url": "https://docs.langchain.com/langsmith/context-engineering-concepts"}
+      ]
+    },
+    {
+      "key": "build",
+      "title": "Build",
+      "teaser": "Time to turn your idea into something you can actually open and talk to — with observability baked in from the first line.",
+      "what": "Turn the spec into a running agent plus a UI you can actually open.",
+      "in_it": [
+        "Framework (deepagents), model, tools/capabilities, middleware, backend",
+        "Tracing wired in from day one",
+        "A build-spec sign-off table before moving on"
+      ],
+      "why": "A phase is only done when you can see it work — not when questions are answered. Tracing-from-the-start is what makes every later phase possible.",
+      "links": [
+        {"label": "Deep Agents — quickstart", "url": "https://docs.langchain.com/oss/python/deepagents/quickstart"},
+        {"label": "LangSmith tracing — quickstart", "url": "https://docs.langchain.com/langsmith/observability-quickstart"}
+      ]
+    },
+    {
+      "key": "test",
+      "title": "Test",
+      "teaser": "Any good software needs testing before release — but agents are a little special: the same input can give different outputs, so we measure behavior, not exact strings.",
+      "what": "TDD for agents — write failing cases first (red), prove they fail, then fix to green. Assert behavior, not exact output.",
+      "in_it": [
+        "Dataset: coverage-first — describe your scenarios → ~10 categories → diverse prompts per category (stratified sampling), plus real failures mined from prod traces and red-team breakers",
+        "Evaluators: 'what matters to you' → assertions, one feedback key per check",
+        "Align: validate the evaluators against your own judgment (annotation queue → alignment %) before trusting them",
+        "Experiment: run + score, then red→green; harden with eval-cost cuts + a CI gate"
+      ],
+      "analogies": [
+        {"concept": "Dataset", "like": "the cases in @pytest.mark.parametrize — the table of inputs the suite runs over (each example = one row)"},
+        {"concept": "Assertion / feedback key", "like": "one Python test, 1-to-1 — each is independently pass/failed and tracked by its key. We implement N of them as a single evaluator that loops over the example's assertions (they're data-driven), but conceptually it's one test per assertion."},
+        {"concept": "Experiment", "like": "the pytest run — every test across every case, reporting pass/fail per (test x case)"}
+      ],
+      "why": "Catches regressions, lets you compare models/prompts objectively, gates safe deploys, and the same evaluators become your online monitors later.",
+      "links": [
+        {"label": "LangSmith evaluations — video walkthrough", "url": "https://www.youtube.com/watch?v=vygFgCNR7WA&list=PLfaIDFEXuae0um8Fj0V4dHG37fGFU8Q5S"},
+        {"label": "Align LLM-judge evaluators with human feedback", "url": "https://www.langchain.com/resources/llm-as-a-judge#how-to-align-evaluators-with-human-feedback"}
+      ]
+    },
+    {
+      "key": "deploy",
+      "title": "Deploy",
+      "teaser": "An agent only creates value once people can reach it. This is where it goes from your machine to the world — safely.",
+      "what": "Put the agent where its users are.",
+      "in_it": [
+        "LangSmith Deployment (or fleet) + a frontend that is a thin deployment CLIENT",
+        "Auth",
+        "GitHub Actions CI that runs your evals on every change"
+      ],
+      "why": "A prototype that never ships generates no value (and no usage). CI keeps quality from silently regressing once people depend on it.",
+      "links": [
+        {"label": "LangSmith Deployment", "url": "https://docs.langchain.com/langsmith/deployment"},
+        {"label": "Deploy your app to cloud", "url": "https://docs.langchain.com/langsmith/deployment-quickstart"}
+      ]
+    },
+    {
+      "key": "monitor",
+      "title": "Monitor",
+      "teaser": "Offline tests can't predict everything real users will do. Monitoring is how you catch the surprises in production.",
+      "what": "Watch the agent on live traffic. Gated on TRACING (on since Build) — NOT on a cloud deploy. Dev runs, test experiments, and red-team runs all populate the dashboards; you're monitoring the moment traces flow.",
+      "in_it": [
+        "Online evaluators (the offline judges, promoted)",
+        "Dashboards + alerts",
+        "Annotation queues to calibrate judges against human labels"
+      ],
+      "why": "Offline evals can't anticipate everything. Real users surface real failure modes — and feed the next round of fixes.",
+      "links": [
+        {"label": "LangSmith Observability", "url": "https://docs.langchain.com/langsmith/observability"},
+        {"label": "Online LLM-as-judge evaluators", "url": "https://docs.langchain.com/langsmith/online-evaluations-llm-as-judge"},
+        {"label": "Alerts (Slack / email / PagerDuty / webhook)", "url": "https://docs.langchain.com/langsmith/alerts"}
+      ]
+    },
+    {
+      "key": "improve",
+      "title": "Improve",
+      "teaser": "Agents drift as models and inputs change. This is the loop that turns real failures into a steadily better agent.",
+      "what": "Close the loop so the agent gets better over time.",
+      "in_it": [
+        "Mine failing traces → add to the dataset",
+        "Optimize prompt/model, re-run evals",
+        "Repeat"
+      ],
+      "why": "Agents drift as inputs and models change. Continuous improvement, grounded in real failures, is how they stay good.",
+      "links": [
+        {"label": "LangSmith Engine", "url": "https://docs.langchain.com/langsmith/engine"},
+        {"label": "Deep Agents — going to production", "url": "https://docs.langchain.com/oss/javascript/deepagents/going-to-production"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>productionalize-agent — get your agent into production, backed by the ADLC</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Crect%20width%3D%2732%27%20height%3D%2732%27%20rx%3D%277%27%20fill%3D%27%230D1322%27%2F%3E%3Cg%20transform%3D%27translate%284%2C4%29%27%20fill%3D%27none%27%20stroke%3D%27%237FC8FF%27%20stroke-width%3D%271.8%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M16.023%209.348h4.992v-.001M2.985%2019.644v-4.992m0%200h4.992m-4.993%200%203.181%203.183a8.25%208.25%200%200%200%2013.803-3.7M4.031%209.865a8.25%208.25%200%200%201%2013.803-3.7l3.181%203.182m0-4.991v4.99%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #030710;
+    --bg-2: #0D1322;
+    --card: #0D1322;
+    --card-2: #161F34;
+    --border: rgba(255,255,255,.08);
+    --text: #F2FAFF;
+    --muted: rgba(255,255,255,.6);
+    --accent: #7FC8FF;
+    --accent-bright: #006DDD;
+    --warn: #FBB0A5;
+    --red: #DB8C8C;
+    --red-bd: #8C3D3D;
+    --green: #8CDB9B;
+    --green-bd: #3D8C5C;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 300;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  code, .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  .section { padding: 88px 0; border-top: 1px solid var(--border); }
+  .eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 16px; }
+  h2 { font-family: 'IBM Plex Mono', monospace; font-size: 27px; font-weight: 400; letter-spacing: 0; line-height: 1.15; margin-bottom: 12px; }
+  h3 { font-size: 17px; font-weight: 600; letter-spacing: -.01em; margin-bottom: 6px; }
+  p.lead { color: var(--muted); font-size: 17px; font-weight: 300; max-width: 70ch; }
+
+  /* hero */
+  .hero {
+    position: relative; overflow: hidden;
+    background:
+      radial-gradient(1100px 500px at 78% -10%, rgba(127,200,255,.12), transparent 60%),
+      radial-gradient(900px 500px at 10% 0%, rgba(0,109,221,.10), transparent 55%),
+      var(--bg);
+    padding: 120px 0 80px;
+  }
+  .badge-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px; }
+  .badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px; font-weight: 400; color: var(--muted);
+    border: 1px solid var(--border); background: rgba(255,255,255,.02);
+    padding: 6px 12px; border-radius: 999px;
+  }
+  .badge b { color: var(--accent); font-weight: 500; }
+  .hero h1 {
+    font-size: clamp(34px, 6vw, 60px); font-weight: 300; letter-spacing: -.02em; line-height: 1.06;
+  }
+  .grad { color: var(--accent); }
+  .hero .sub { margin-top: 22px; font-size: 19px; font-weight: 300; color: var(--text); max-width: 64ch; }
+  .hero .sub .em { color: var(--accent); font-weight: 500; }
+  .cmd {
+    margin-top: 34px; display: inline-flex; align-items: center; gap: 12px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 18px; font-family: 'IBM Plex Mono', monospace; font-size: 15px;
+  }
+  .cmd .dollar { color: var(--accent); }
+  .cmd .blink, .cmdmap-label .blink { width: 8px; height: 16px; background: var(--accent); display: inline-block; animation: blink 1.1s steps(2) infinite; vertical-align: middle; margin-left: 1px; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* pipeline */
+  .pipe { display: flex; align-items: stretch; gap: 0; flex-wrap: wrap; margin-top: 28px; }
+  .stage {
+    flex: 1 1 0; min-width: 150px; position: relative;
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 16px 18px; margin: 6px;
+  }
+  .stage .n { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--accent); }
+  .stage h4 { font-size: 15px; font-weight: 600; margin: 4px 0 6px; }
+  .stage p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .stage.gate { border-color: rgba(127,200,255,.4); box-shadow: 0 0 0 1px rgba(127,200,255,.15) inset; }
+
+  /* grid cards */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 28px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 22px; transition: transform .15s ease, border-color .15s ease;
+  }
+  .card:hover { transform: translateY(-3px); border-color: rgba(127,200,255,.35); }
+  .card .ic { font-size: 22px; margin-bottom: 12px; }
+  .card p { color: var(--muted); font-size: 14.5px; }
+
+  /* problem/solution split */
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 26px; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+  .panel.problem { border-left: 3px solid var(--red-bd); }
+  .panel.solution { border-left: 3px solid var(--green-bd); }
+  .panel ul { list-style: none; margin-top: 10px; }
+  .panel li { padding: 6px 0 6px 24px; position: relative; color: var(--muted); font-size: 14.5px; }
+  .panel.problem li::before { content: "✕"; position: absolute; left: 0; color: var(--red); }
+  .panel.solution li::before { content: "✓"; position: absolute; left: 0; color: var(--green); }
+
+  table.feat { width: 100%; border-collapse: collapse; margin-top: 24px; font-size: 14.5px; }
+  table.feat th { text-align: left; font-family: 'IBM Plex Mono', monospace; color: var(--accent); font-size: 12px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  table.feat td { padding: 13px 14px; border-bottom: 1px solid var(--border); color: var(--muted); vertical-align: top; }
+  table.feat td b { color: var(--text); font-weight: 500; }
+  table.feat tr:hover td { background: rgba(255,255,255,.015); }
+
+  .pill { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 12px; background: rgba(127,200,255,.1); color: var(--accent); border: 1px solid rgba(127,200,255,.25); padding: 2px 8px; border-radius: 6px; }
+
+  footer { padding: 88px 0 64px; border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; }
+  footer .goal { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 24px; margin-bottom: 26px; }
+  footer .goal b { color: var(--text); }
+
+  @media (max-width: 720px) { .split { grid-template-columns: 1fr; } }
+  .qflow{margin-top:26px;display:flex;flex-direction:column;gap:10px}
+  .qphase{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+  .qphase .qp{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-weight:500;margin-bottom:8px}
+  .qrow{font-size:14px;color:var(--muted);padding:4px 0;line-height:1.7}
+  .qrow b{color:var(--text);font-weight:500}
+  .qopt{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12px;background:rgba(127,200,255,.06);border:1px solid rgba(127,200,255,.2);border-radius:6px;padding:3px 9px;margin:3px 4px 3px 7px;color:var(--text)}
+  .bigquote{font-size:clamp(26px,4.5vw,42px);font-weight:300;letter-spacing:-.02em;line-height:1.2;color:var(--text);margin:0 0 6px;max-width:22ch}
+  .bigquote cite{display:block;margin-top:16px;font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:400;font-style:normal;color:var(--accent)}
+  .cmdmap{margin-top:30px;border:1px solid rgba(127,200,255,.45);border-radius:14px;padding:18px 20px;background:rgba(127,200,255,.05)}
+  .cmdmap-label{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:500;color:var(--accent);margin-bottom:14px}
+  .cmdmap-label span{color:var(--muted);font-family:'Inter',sans-serif;font-weight:300;font-size:13px}
+  .cmdmap-inner{display:flex;flex-wrap:wrap;gap:10px}
+  .cmdbox{font-family:'IBM Plex Mono',monospace;font-size:14px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:var(--text)}
+  .cmdmap-note{margin-top:14px;font-size:13.5px;color:var(--muted)}
+
+/* Heroicons v2.1.5 (CSS mask, color via currentColor) */
+.ico{display:inline-block;width:1em;height:1em;vertical-align:-0.15em;background:currentColor;-webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}
+.ico-bolt{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22m3.75%2013.5%2010.5-11.25L12%2010.5h8.25L9.75%2021.75%2012%2013.5H3.75Z%22%2F%3E%3C%2Fsvg%3E")}
+.ico-arrow-path{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M16.023%209.348h4.992v-.001M2.985%2019.644v-4.992m0%200h4.992m-4.993%200%203.181%203.183a8.25%208.25%200%200%200%2013.803-3.7M4.031%209.865a8.25%208.25%200%200%201%2013.803-3.7l3.181%203.182m0-4.991v4.99%22%2F%3E%3C%2Fsvg%3E")}
+.ico-rocket-launch{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M15.59%2014.37a6%206%200%200%201-5.84%207.38v-4.8m5.84-2.58a14.98%2014.98%200%200%200%206.16-12.12A14.98%2014.98%200%200%200%209.631%208.41m5.96%205.96a14.926%2014.926%200%200%201-5.841%202.58m-.119-8.54a6%206%200%200%200-7.381%205.84h4.8m2.581-5.84a14.927%2014.927%200%200%200-2.58%205.84m2.699%202.7c-.103.021-.207.041-.311.06a15.09%2015.09%200%200%201-2.448-2.448%2014.9%2014.9%200%200%201%20.06-.312m-2.24%202.39a4.493%204.493%200%200%200-1.757%204.306%204.493%204.493%200%200%200%204.306-1.758M16.5%209a1.5%201.5%200%201%201-3%200%201.5%201.5%200%200%201%203%200Z%22%2F%3E%3C%2Fsvg%3E")}
+.ico-viewfinder-circle{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M7.5%203.75H6A2.25%202.25%200%200%200%203.75%206v1.5M16.5%203.75H18A2.25%202.25%200%200%201%2020.25%206v1.5m0%209V18A2.25%202.25%200%200%201%2018%2020.25h-1.5m-9%200H6A2.25%202.25%200%200%201%203.75%2018v-1.5M15%2012a3%203%200%201%201-6%200%203%203%200%200%201%206%200Z%22%2F%3E%3C%2Fsvg%3E")}
+.ico-face-frown{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M15.182%2016.318A4.486%204.486%200%200%200%2012.016%2015a4.486%204.486%200%200%200-3.198%201.318M21%2012a9%209%200%201%201-18%200%209%209%200%200%201%2018%200ZM9.75%209.75c0%20.414-.168.75-.375.75S9%2010.164%209%209.75%209.168%209%209.375%209s.375.336.375.75Zm-.375%200h.008v.015h-.008V9.75Zm5.625%200c0%20.414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75Zm-.375%200h.008v.015h-.008V9.75Z%22%2F%3E%3C%2Fsvg%3E")}
+.ico-document-text{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M19.5%2014.25v-2.625a3.375%203.375%200%200%200-3.375-3.375h-1.5A1.125%201.125%200%200%201%2013.5%207.125v-1.5a3.375%203.375%200%200%200-3.375-3.375H8.25m0%2012.75h7.5m-7.5%203H12M10.5%202.25H5.625c-.621%200-1.125.504-1.125%201.125v17.25c0%20.621.504%201.125%201.125%201.125h12.75c.621%200%201.125-.504%201.125-1.125V11.25a9%209%200%200%200-9-9Z%22%2F%3E%3C%2Fsvg%3E")}
+.ico-academic-cap{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M4.26%2010.147a60.438%2060.438%200%200%200-.491%206.347A48.62%2048.62%200%200%201%2012%2020.904a48.62%2048.62%200%200%201%208.232-4.41%2060.46%2060.46%200%200%200-.491-6.347m-15.482%200a50.636%2050.636%200%200%200-2.658-.813A59.906%2059.906%200%200%201%2012%203.493a59.903%2059.903%200%200%201%2010.399%205.84c-.896.248-1.783.52-2.658.814m-15.482%200A50.717%2050.717%200%200%201%2012%2013.489a50.702%2050.702%200%200%201%207.74-3.342M6.75%2015a.75.75%200%201%200%200-1.5.75.75%200%200%200%200%201.5Zm0%200v-3.675A55.378%2055.378%200%200%201%2012%208.443m-7.007%2011.55A5.981%205.981%200%200%200%206.75%2015.75v-1.5%22%2F%3E%3C%2Fsvg%3E")}
+.ico-link{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M13.19%208.688a4.5%204.5%200%200%201%201.242%207.244l-4.5%204.5a4.5%204.5%200%200%201-6.364-6.364l1.757-1.757m13.35-.622%201.757-1.757a4.5%204.5%200%200%200-6.364-6.364l-4.5%204.5a4.5%204.5%200%200%200%201.242%207.244%22%2F%3E%3C%2Fsvg%3E")}
+.ico-beaker{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M9.75%203.104v5.714a2.25%202.25%200%200%201-.659%201.591L5%2014.5M9.75%203.104c-.251.023-.501.05-.75.082m.75-.082a24.301%2024.301%200%200%201%204.5%200m0%200v5.714c0%20.597.237%201.17.659%201.591L19.8%2015.3M14.25%203.104c.251.023.501.05.75.082M19.8%2015.3l-1.57.393A9.065%209.065%200%200%201%2012%2015a9.065%209.065%200%200%200-6.23-.693L5%2014.5m14.8.8%201.402%201.402c1.232%201.232.65%203.318-1.067%203.611A48.309%2048.309%200%200%201%2012%2021c-2.773%200-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5%2014.5%22%2F%3E%3C%2Fsvg%3E")}
+.ico-signal{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M9.348%2014.652a3.75%203.75%200%200%201%200-5.304m5.304%200a3.75%203.75%200%200%201%200%205.304m-7.425%202.121a6.75%206.75%200%200%201%200-9.546m9.546%200a6.75%206.75%200%200%201%200%209.546M5.106%2018.894c-3.808-3.807-3.808-9.98%200-13.788m13.788%200c3.808%203.807%203.808%209.98%200%2013.788M12%2012h.008v.008H12V12Zm.375%200a.375.375%200%201%201-.75%200%20.375.375%200%200%201%20.75%200Z%22%2F%3E%3C%2Fsvg%3E")}
+.ico-puzzle-piece{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M14.25%206.087c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003%200-1.036-1.007-1.875-2.25-1.875s-2.25.84-2.25%201.875c0%20.369.128.713.349%201.003.215.283.401.604.401.959v0a.64.64%200%200%201-.657.643%2048.39%2048.39%200%200%201-4.163-.3c.186%201.613.293%203.25.315%204.907a.656.656%200%200%201-.658.663v0c-.355%200-.676-.186-.959-.401a1.647%201.647%200%200%200-1.003-.349c-1.036%200-1.875%201.007-1.875%202.25s.84%202.25%201.875%202.25c.369%200%20.713-.128%201.003-.349.283-.215.604-.401.959-.401v0c.31%200%20.555.26.532.57a48.039%2048.039%200%200%201-.642%205.056c1.518.19%203.058.309%204.616.354a.64.64%200%200%200%20.657-.643v0c0-.355-.186-.676-.401-.959a1.647%201.647%200%200%201-.349-1.003c0-1.035%201.008-1.875%202.25-1.875%201.243%200%202.25.84%202.25%201.875%200%20.369-.128.713-.349%201.003-.215.283-.4.604-.4.959v0c0%20.333.277.599.61.58a48.1%2048.1%200%200%200%205.427-.63%2048.05%2048.05%200%200%200%20.582-4.717.532.532%200%200%200-.533-.57v0c-.355%200-.676.186-.959.401-.29.221-.634.349-1.003.349-1.035%200-1.875-1.007-1.875-2.25s.84-2.25%201.875-2.25c.37%200%20.713.128%201.003.349.283.215.604.401.96.401v0a.656.656%200%200%200%20.658-.663%2048.422%2048.422%200%200%200-.37-5.36c-1.886.342-3.81.574-5.766.689a.578.578%200%200%201-.61-.58v0Z%22%2F%3E%3C%2Fsvg%3E")}
+.ico-hand-thumb-down{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M7.498%2015.25H4.372c-1.026%200-1.945-.694-2.054-1.715a12.137%2012.137%200%200%201-.068-1.285c0-2.848.992-5.464%202.649-7.521C5.287%204.247%205.886%204%206.504%204h4.016a4.5%204.5%200%200%201%201.423.23l3.114%201.04a4.5%204.5%200%200%200%201.423.23h1.294M7.498%2015.25c.618%200%20.991.724.725%201.282A7.471%207.471%200%200%200%207.5%2019.75%202.25%202.25%200%200%200%209.75%2022a.75.75%200%200%200%20.75-.75v-.633c0-.573.11-1.14.322-1.672.304-.76.93-1.33%201.653-1.715a9.04%209.04%200%200%200%202.86-2.4c.498-.634%201.226-1.08%202.032-1.08h.384m-10.253%201.5H9.7m8.075-9.75c.01.05.027.1.05.148.593%201.2.925%202.55.925%203.977%200%201.487-.36%202.89-.999%204.125m.023-8.25c-.076-.365.183-.75.575-.75h.908c.889%200%201.713.518%201.972%201.368.339%201.11.521%202.287.521%203.507%200%201.553-.295%203.036-.831%204.398-.306.774-1.086%201.227-1.918%201.227h-1.053c-.472%200-.745-.556-.5-.96a8.95%208.95%200%200%200%20.303-.54%22%2F%3E%3C%2Fsvg%3E")}
+.ico-clock{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M12%206v6h4.5m4.5%200a9%209%200%201%201-18%200%209%209%200%200%201%2018%200Z%22%2F%3E%3C%2Fsvg%3E")}
+.ico-book-open{--i:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M12%206.042A8.967%208.967%200%200%200%206%203.75c-1.052%200-2.062.18-3%20.512v14.25A8.987%208.987%200%200%201%206%2018c2.305%200%204.408.867%206%202.292m0-14.25a8.966%208.966%200%200%201%206-2.292c1.052%200%202.062.18%203%20.512v14.25A8.987%208.987%200%200%200%2018%2018a8.967%208.967%200%200%200-6%202.292m0-14.25v14.25%22%2F%3E%3C%2Fsvg%3E")}
+.badge .ico,.cmdmap-note .ico{color:var(--accent);margin-right:5px}
+.qrow .ico{color:var(--accent);margin:0 2px;vertical-align:-0.16em}
+.card .ic .ico{color:var(--accent);width:26px;height:26px}
+.frown-ico{color:var(--red);margin-left:4px}
+
+  /* —— deep-agent-style: centered light-blue section headers —— */
+  .section .eyebrow{text-align:center}
+  h2{font-family:'Inter',system-ui,sans-serif;font-size:clamp(28px,4vw,40px);font-weight:300;letter-spacing:-.02em;line-height:1.12;color:var(--accent);text-align:center;margin-bottom:14px}
+  .section > .wrap > p.lead{margin-left:auto;margin-right:auto;text-align:center}
+  .bigquote{margin-left:auto;margin-right:auto;text-align:center}
+  .panel,.qphase,table.feat,.card,.stepcard,.lc{text-align:left}
+  /* numbered "how it works" cards */
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));gap:18px;margin-top:34px}
+  .stepcard{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:30px 26px;text-align:center;transition:border-color .15s ease}
+  .stepcard:hover{border-color:rgba(127,200,255,.35)}
+  .stepnum{width:34px;height:34px;border-radius:9px;background:var(--card-2);border:1px solid var(--border);color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+  .stepcard h3{font-size:19px;font-weight:500;letter-spacing:-.01em;margin-bottom:10px;text-align:center}
+  .stepcard p{color:var(--muted);font-size:14px;margin:0 auto;max-width:32ch}
+  .cta-row{text-align:center;margin-top:30px}
+  .cta-ghost{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:11px 22px}
+  .cta-ghost:hover{border-color:var(--accent);text-decoration:none}
+  /* lifecycle accordion + visual */
+  .lc{display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:center;margin-top:34px}
+  details.acc-item{border-bottom:1px solid var(--border);padding:16px 2px}
+  details.acc-item summary{list-style:none;cursor:pointer;display:flex;gap:13px;align-items:center}
+  details.acc-item summary::-webkit-details-marker{display:none}
+  .acc-ico{flex:none;width:34px;height:34px;border-radius:9px;background:var(--card-2);border:1px solid var(--border);color:var(--accent);display:flex;align-items:center;justify-content:center}
+  .acc-ico .ico{width:18px;height:18px}
+  .acc-tt{flex:1}.acc-tt h4{font-size:17px;font-weight:500;color:var(--text)}.acc-tt .s{font-size:13px;color:var(--muted);margin-top:1px}
+  .acc-plus{color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:18px}
+  .acc-plus::before{content:"+"} details[open] .acc-plus::before{content:"\2013"}
+  .acc-body{color:var(--muted);font-size:14px;margin:12px 0 2px 47px;max-width:48ch}
+  .acc-body.qbody{max-width:none;margin-top:8px}
+  .acc-link{display:inline-block;margin-top:10px;font-size:13.5px;color:var(--accent)}
+  .lc-visual{background:linear-gradient(180deg,var(--card),#0a1422);border:1px solid var(--border);border-radius:18px;padding:26px;box-shadow:0 0 90px rgba(127,200,255,.09)}
+  .lc-visual .vh{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+  .vstep{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--border);border-radius:9px;margin:7px 0;font-size:13.5px;color:var(--muted);background:rgba(255,255,255,.01)}
+  .vstep b{color:var(--text);font-weight:500}
+  .vstep.done{border-color:rgba(140,219,155,.35)} .vstep.done .g{color:var(--green)}
+  .vstep.cur{border-color:rgba(127,200,255,.5);box-shadow:0 0 0 1px rgba(127,200,255,.2) inset} .vstep.cur .g{color:var(--accent)}
+  .vstep .g{font-family:'IBM Plex Mono',monospace;font-variant-emoji:text}
+  @media(max-width:820px){.lc{grid-template-columns:1fr}}
+  /* —— onboarding simulation (fake terminal) —— */
+  .sim{background:#05080d;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 0 90px rgba(127,200,255,.07);max-width:760px;margin:34px auto 0}
+  .sim-bar{display:flex;align-items:center;gap:7px;padding:11px 14px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02)}
+  .sim-bar .dot{width:11px;height:11px;border-radius:50%}
+  .sim-bar .d1{background:#ff5f57}.sim-bar .d2{background:#febc2e}.sim-bar .d3{background:#28c840}
+  .sim-bar .t{margin-left:8px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted)}
+  .sim-body{padding:18px 18px 34px;height:440px;overflow:hidden;font-size:13.5px;line-height:1.55}
+  .sim .row{margin:7px 0}
+  .sim .user{font-family:'IBM Plex Mono',monospace;color:var(--text)}
+  .sim .pfx{color:var(--accent);margin-right:8px}
+  .sim .tx.cmd{color:var(--accent)}
+  .sim .bot{color:var(--text)}
+  .sim .sys{color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:12.5px}
+  .sim .ok{color:var(--green);font-family:'IBM Plex Mono',monospace;font-size:12.5px}
+  .sim .link{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--muted)}
+  .sim .lnk{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+  .sim .phase{color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;margin-top:14px}
+  .sim .done{color:var(--text);font-weight:500}
+  .sim .opts{display:flex;flex-wrap:wrap;gap:8px;margin:5px 0 2px}
+  .sim .opt{font-family:'IBM Plex Mono',monospace;font-size:12.5px;border:1px solid var(--border);border-radius:8px;padding:5px 11px;color:var(--muted);transition:all .2s}
+  .sim .opt.sel{border-color:var(--accent);color:var(--accent);background:rgba(127,200,255,.08)}
+  .sim .teach{border-left:2px solid var(--accent-bright);background:rgba(127,200,255,.04);border-radius:0 8px 8px 0;padding:9px 13px;margin:6px 0}
+  .sim .teach .h{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:3px}
+  .sim .teach .b{color:var(--muted);font-size:13px}
+  .cur{display:inline-block;width:7px;height:14px;background:var(--accent);vertical-align:-2px;animation:blink 1.1s steps(2) infinite}
+  .sim-cap{text-align:center;color:var(--muted);font-size:12.5px;margin-top:14px}
+  .sim-cap button{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--text);background:transparent;border:1px solid var(--border);border-radius:8px;padding:6px 13px;cursor:pointer;margin-left:6px}
+  .sim-cap button:hover{border-color:var(--accent)}
+  /* common questions (FAQ accordion) */
+  .faq{max-width:760px;margin:30px auto 0}
+  .faq details{border-bottom:1px solid var(--border);padding:18px 2px}
+  .faq summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;font-size:16px;font-weight:500;color:var(--text)}
+  .faq summary::-webkit-details-marker{display:none}
+  .faq .qp{color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:18px;flex:none}
+  .faq .qp::before{content:"+"} .faq details[open] .qp::before{content:"\2013"}
+  .faq p{color:var(--muted);font-size:14.5px;margin:12px 0 2px;max-width:74ch}
+  /* morph blob */
+  .morph{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;margin-top:30px;text-align:left}
+  .morph .lead{text-align:left;margin-left:0;max-width:48ch}
+  .blobwrap{display:flex;justify-content:center;align-items:center;min-height:280px}
+  .blob{width:240px;height:240px;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 32% 28%, rgba(127,200,255,.40), rgba(0,109,221,.16) 70%);
+    border:1px solid rgba(127,200,255,.30);box-shadow:0 0 90px rgba(127,200,255,.14);
+    border-radius:42% 58% 70% 30% / 45% 45% 55% 55%;
+    animation:morph 9s ease-in-out infinite, blobspin 26s linear infinite}
+  .blob .lbl{font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--text);text-align:center;animation:blobspin 26s linear infinite reverse}
+  .blob .lbl small{display:block;color:var(--accent);font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
+  @keyframes morph{0%,100%{border-radius:42% 58% 70% 30% / 45% 45% 55% 55%}33%{border-radius:62% 38% 34% 66% / 58% 36% 64% 42%}66%{border-radius:34% 66% 56% 44% / 40% 62% 38% 60%}}
+  @keyframes blobspin{to{transform:rotate(360deg)}}
+  @media(prefers-reduced-motion:reduce){.blob,.blob .lbl{animation:none}}
+  @media(max-width:820px){.morph{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="badge-row">
+      <span class="badge"><i class="ico ico-bolt"></i>step-by-step <b>onboarding wizard</b></span>
+      <span class="badge"><i class="ico ico-arrow-path"></i>backed by the <b>ADLC</b></span>
+      <span class="badge"><i class="ico ico-rocket-launch"></i>harness the full power of <b>LangSmith</b></span>
+    </div>
+    <h1>What if you had the <span class="grad">world's best AI engineering team</span> in your pocket?</h1>
+    <p class="sub">The LangSmith team took everything we've learned from three years leading the AI-deployment space and put it into one skill: the first built to take your agent <b>from prototype to production</b>.</p>
+    <div class="cmdmap">
+      <div class="cmdmap-label">/productionalize-agent<span class="blink"></span> <span>— the adlc orchestrator: runs every phase in order</span></div>
+      <div class="cmdmap-inner">
+        <span class="cmdbox">/build-agent</span>
+        <span class="cmdbox">/test-agent</span>
+        <span class="cmdbox">/deploy-agent</span>
+        <span class="cmdbox">/monitor-agent</span>
+        <span class="cmdbox">/improve-agent</span>
+      </div>
+      <div class="cmdmap-note"><i class="ico ico-viewfinder-circle"></i><b>Use one or all.</b> Build from scratch or improve an agent already in production!</div>
+    </div>
+  </div>
+</header>
+
+<section class="section">
+  <div class="wrap">
+    <div class="eyebrow">The onboarding</div>
+    <h2>Watch the wizard take you from idea to production</h2>
+    <div class="sim">
+      <div class="sim-bar"><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span><span class="t">productionalize-agent — terminal</span></div>
+      <div class="sim-body" id="simBody"></div>
+    </div>
+    <div class="sim-cap">▸ a sped-up run of <span class="mono">/productionalize-agent</span> <button id="simReplay">↻ replay</button></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="eyebrow">The gap</div>
+    <blockquote class="bigquote">"Prototypes are easy, production is hard."<cite>— <a href="https://x.com/elonmusk/status/1389102532706848768">Elon Musk</a></cite></blockquote>
+    <div class="split">
+      <div class="panel problem">
+        <h3>Without <span class="mono">/productionalize-agent</span></h3>
+        <ul>
+          <li>No evals → suboptimal quality, cost &amp; latency (flying blind)</li>
+          <li>No tests, no CI → shipping bugs &amp; regressions</li>
+          <li>No monitoring → unexpected cost runaway, found out too late</li>
+          <li><b>A cool demo that never sees the light of day</b><i class="ico ico-face-frown frown-ico"></i></li>
+        </ul>
+      </div>
+      <div class="panel solution">
+        <h3>With <span class="mono">/productionalize-agent</span></h3>
+        <ul>
+          <li>One command boots a guided, manifest-driven wizard</li>
+          <li>TDD for agents: a dataset + evaluators you <em>trust</em></li>
+          <li>CI, online evals, alerts — surfaced, not forgotten</li>
+          <li>Traced → tested → deployed → monitored on LangSmith</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="eyebrow">Not just a wizard</div>
+    <h2>It teaches the craft as you ship</h2>
+    <p class="lead">We've built up best practices, dispersed across hundreds of blogs, research, and videos. This skill brings those to you and teaches too — making you the expert along the way.</p>
+    <p class="lead"><b>3 teaching modes:</b> <span class="qopt">low</span><span class="qopt">medium</span><span class="qopt">high</span></p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="eyebrow">Adaptable</div>
+    <h2>Morphs around your current codebase</h2>
+    <div class="morph">
+      <div>
+        <p class="lead">Point <span class="mono">/productionalize-agent</span>, or any of the sub-skills, at <b>any codebase</b>. It researches your current setup first, then recommends the <b>minimal changes</b> to start harnessing the power of the ADLC. It adapts to you, not the other way around.</p>
+      </div>
+      <div class="blobwrap">
+        <div class="blob"><span class="lbl">your codebase<small>it forms around it</small></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="wizard">
+  <div class="wrap">
+    <div class="eyebrow">The /productionalize-agent wizard</div>
+    <h2>Five phases, one guided experience</h2>
+    <div class="acc" style="max-width:840px;margin:34px auto 0">
+      <details class="acc-item" open>
+        <summary><span class="acc-ico"><i class="ico ico-viewfinder-circle"></i></span><span class="acc-tt"><h4>Scope</h4><div class="s">what you're building &amp; who it's for</div></span><span class="acc-plus"></span></summary>
+        <div class="acc-body qbody">
+          <div class="qrow"><b>Starting point?</b><span class="qopt">Build new</span><span class="qopt">Bring my own agent</span></div>
+          <div class="qrow"><b>Describe it</b> (natural language)</div>
+          <div class="qrow"><b>What is your goal?</b><span class="qopt">demo</span><span class="qopt">serve real users</span></div>
+          <div class="qrow"><b>Who's it for?</b><span class="qopt">Myself / team → fleet (exit early)</span><span class="qopt">Customers (external) → continue</span></div>
+          <div class="qrow"><b>Teaching level?</b><span class="qopt">low</span><span class="qopt">medium</span><span class="qopt">high</span></div>
+        </div>
+      </details>
+      <details class="acc-item">
+        <summary><span class="acc-ico"><i class="ico ico-bolt"></i></span><span class="acc-tt"><h4>Build</h4><div class="s">scaffold or instrument — until traces flow</div></span><span class="acc-plus"></span></summary>
+        <div class="acc-body qbody">
+          <div class="qrow"><b>What kind?</b><span class="qopt">Agent → deepagents</span><span class="qopt">Workflow → langgraph</span><span class="qopt">Prompt → single call</span></div>
+          <div class="qrow"><b>Model?</b><span class="qopt">choose-for-me</span><span class="qopt">I pick</span></div>
+          <div class="qrow"><b>Capabilities?</b><span class="qopt">computer use</span><span class="qopt">filesystem</span><span class="qopt">…</span></div>
+          <div class="qrow"><b>Tools?</b><span class="qopt">MCP integrations</span></div>
+          <div class="qrow"><b>Knowledge source?</b><span class="qopt">docs</span><span class="qopt">url</span><span class="qopt">generate</span><span class="qopt">none</span></div>
+        </div>
+      </details>
+      <details class="acc-item">
+        <summary><span class="acc-ico"><i class="ico ico-beaker"></i></span><span class="acc-tt"><h4>Test</h4><div class="s">a dataset + evaluators you trust</div></span><span class="acc-plus"></span></summary>
+        <div class="acc-body qbody">
+          <div class="qrow"><b>Build the dataset</b> → diverse / red-team cases</div>
+          <div class="qrow"><b>What matters?</b> → write the test cases (evals)</div>
+          <div class="qrow"><b>Score</b> → run the test-suite (experiment)</div>
+          <div class="qrow"><b>Align</b> → grade in queue → alignment % (the trust step)</div>
+          <div class="qrow"><b>Fix</b> → adjust the harness to fix issues uncovered</div>
+          <div class="qrow"><b>Optimize</b> → swap models for cheapest / best-performing</div>
+          <div class="qrow"><b>Harden</b> → eval cost + CI gate</div>
+        </div>
+      </details>
+      <details class="acc-item">
+        <summary><span class="acc-ico"><i class="ico ico-rocket-launch"></i></span><span class="acc-tt"><h4>Deploy</h4><div class="s">ship behind a CI gate</div></span><span class="acc-plus"></span></summary>
+        <div class="acc-body qbody">
+          <div class="qrow"><b>Host?</b><span class="qopt">langsmith-deployments</span><span class="qopt">own-infra</span></div>
+          <div class="qrow"><b>Auth?</b><span class="qopt">OAuth</span><span class="qopt">API key</span><span class="qopt">SSO</span><span class="qopt">none</span></div>
+          <div class="qrow"><b>Frontend?</b><span class="qopt">CopilotKit</span><span class="qopt">agent-chat-ui</span><span class="qopt">assistant-ui</span><span class="qopt">own</span><span class="qopt">none</span></div>
+        </div>
+      </details>
+      <details class="acc-item">
+        <summary><span class="acc-ico"><i class="ico ico-signal"></i></span><span class="acc-tt"><h4>Monitor</h4><div class="s">online evals + alerts on live traffic</div></span><span class="acc-plus"></span></summary>
+        <div class="acc-body qbody">
+          <div class="qrow"><b>Online evals?</b> which checks + sampling %</div>
+          <div class="qrow"><b>Alerts?</b><span class="qopt">errors</span><span class="qopt">latency</span><span class="qopt">score-drops</span><span class="qopt">cost</span></div>
+        </div>
+      </details>
+      <details class="acc-item">
+        <summary><span class="acc-ico"><i class="ico ico-arrow-path"></i></span><span class="acc-tt"><h4>Improve</h4><div class="s">close the loop</div></span><span class="acc-plus"></span></summary>
+        <div class="acc-body qbody">
+          <div class="qrow"><b>Self-improve?</b><span class="qopt">yes</span><span class="qopt">no</span></div>
+          <div class="qrow">auto-route <i class="ico ico-hand-thumb-down"></i> feedback → queue</div>
+          <div class="qrow"><b>Engine</b> link (enable in the LangSmith UI)</div>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="eyebrow">Inside Test</div>
+    <h2>Evals you can actually trust</h2>
+    <table class="feat">
+      <tr><th>Sub-step</th><th>What happens</th></tr>
+      <tr><td><span class="pill">dataset</span></td><td><b>Find issues</b> — red-team <em>workflow</em> (parallel agents loop until they break it); maximize sample <b>diversity</b>, not size.</td></tr>
+      <tr><td><span class="pill">evaluators</span></td><td><b>What matters to you?</b> Pick dimensions — or "show me examples and I'll tell you what's good/bad." One feedback key = one test.</td></tr>
+      <tr><td><span class="pill">score</span></td><td>Run the experiment → per-key pass/fail across every case.</td></tr>
+      <tr><td><span class="pill">align</span></td><td><b>Are the evaluators any good?</b> Grade in an annotation queue → alignment % → iterate the eval prompts (train/test split, no overfitting).</td></tr>
+      <tr><td><span class="pill">fix</span></td><td>Adjust the harness to fix any issues the suite uncovered; re-run until red→green, nothing regressed. The dataset becomes a permanent regression suite.</td></tr>
+      <tr><td><span class="pill">optimize</span></td><td>Sweep models against the trusted suite → pick the <b>cheapest / best-performing</b> that still passes (resolves "choose for me").</td></tr>
+      <tr><td><span class="pill">harden</span></td><td>Reduce eval cost; add a PR-triggered <b>CI gate</b> so quality can't silently regress.</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- hidden for now — Cross-cutting mechanics
+<section class="section">
+  <div class="wrap">
+    <div class="eyebrow">How it works</div>
+    <h2>Cross-cutting mechanics</h2>
+    <div class="grid">
+      <div class="card"><div class="ic"><i class="ico ico-document-text"></i></div><h3>Manifest-driven</h3><p>A <code>.adlc.json</code> records every answer — dynamic (skips what it knows), resumable, and the build spec the sub-skills read.</p></div>
+      <div class="card"><div class="ic"><i class="ico ico-academic-cap"></i></div><h3>Teaches as it goes</h3><p>Static, vetted curriculum (+ a <span class="mono">/powerup</span>-style TUI). Each phase: a teaser with <em>Learn more · Read later · Continue</em>.</p></div>
+      <div class="card"><div class="ic"><i class="ico ico-link"></i></div><h3>Surfaces everything</h3><p>Every dataset, experiment, queue & dashboard is a clickable link — recapped in a final wrap-up index. Every "Later" is tracked.</p></div>
+      <div class="card"><div class="ic"><i class="ico ico-beaker"></i></div><h3>Red-team workflow</h3><p>Fans out parallel adversarial agents that loop until they actually break your agent — confirmed failures, not guesses.</p></div>
+      <div class="card"><div class="ic"><i class="ico ico-signal"></i></div><h3>Online + offline evals</h3><p>The same judges run on a dataset (CI) and on a sample of live traffic (monitoring), unified by feedback key.</p></div>
+      <div class="card"><div class="ic"><i class="ico ico-puzzle-piece"></i></div><h3>Bring your own agent</h3><p>deepagents native, or instrument any stack — Claude/OpenAI SDK via <code>wrap_*</code>, home-grown via <code>@traceable</code>.</p></div>
+    </div>
+  </div>
+</section>
+-->
+
+
+<section class="section">
+  <div class="wrap">
+    <div class="eyebrow">Who it's for</div>
+    <h2>Who is this for</h2>
+    <div class="grid">
+      <div class="card"><div class="ic"><i class="ico ico-rocket-launch"></i></div><h3>Teams shipping to production</h3><p>Anyone looking to <b>productionalize faster</b> — get an agent traced → tested → deployed → monitored without stitching the whole stack together by hand.</p></div>
+      <div class="card"><div class="ic"><i class="ico ico-academic-cap"></i></div><h3>Builders enabling their org</h3><p>Teams who want to <b>empower their own teams</b>: fork it, fit it to your infra, and put everyone in the org on the same rails for shipping agents.</p></div>
+      <div class="card"><div class="ic"><i class="ico ico-puzzle-piece"></i></div><h3>The LangSmith curious</h3><p>Really, <b>anyone</b> who wants to explore and harness the full power of LangSmith for best-in-class agentic development.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="eyebrow">FAQ</div>
+    <h2>Common Questions</h2>
+    <div class="faq">
+      <details open>
+        <summary>Will this work with an existing agent?<span class="qp"></span></summary>
+        <p>Yes — drop in at <b>any</b> phase. Point <span class="mono">/test-agent</span> (or any phase command) at an agent already in production; it inspects the code, framework, and existing traces, bootstraps the manifest, and hardens what's missing. You don't have to start at <span class="mono">/build-agent</span>.</p>
+      </details>
+      <details>
+        <summary>Will this force me to use LangSmith for everything?<span class="qp"></span></summary>
+        <p>It centers the <b>LangSmith stack</b> for observability, evals, deployment, and monitoring — that's the point. But it's <b>framework-neutral on the agent itself</b> (deepagents, LangGraph, a Claude/OpenAI-SDK agent, or home-grown all work), and every phase is opt-in: run one command or all six. Nothing forces a rewrite.</p>
+      </details>
+      <details>
+        <summary>Will this help me migrate to LangSmith?<span class="qp"></span></summary>
+        <p>It helps you <b>instrument your current code</b> to start getting traces into LangSmith. For a deeper migration <em>from a similar product</em>, we have a separate project — <span class="mono">/migrate-from-*</span> — built for that.</p>
+      </details>
+      <details>
+        <summary>Can I customize the wizard?<span class="qp"></span></summary>
+        <p>Yes — it's built to be <b>forked and fit to your org</b>: pin approved models, swap auth / CI / frontend defaults, tune the teaching curriculum, and drop features you don't have (Engine, fleet). Forks sync upstream for new best practices, and field-discovered fixes can PR back.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>A guided skill for the Agent Development Life Cycle — proposed contribution to <a href="https://github.com/langchain-ai/langsmith-skills">langchain-ai/langsmith-skills</a>. Inspired by <a href="https://github.com/garrytan/gstack">gstack</a> &amp; <a href="https://github.com/obra/superpowers">superpowers</a>.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  /* single-open accordion (Wizard phases) */
+  var items=[].slice.call(document.querySelectorAll('details.acc-item'));
+  items.forEach(function(d){
+    d.addEventListener('toggle',function(){
+      if(d.open) items.forEach(function(o){ if(o!==d) o.open=false; });
+    });
+  });
+})();
+</script>
+<script>
+(function(){
+  var body=document.getElementById('simBody'); if(!body) return;
+  var seq=[
+    {t:'prompt', s:'/productionalize-agent', cmd:true, d:650},
+    {t:'bot', s:"Welcome! I'll take your agent from idea → traced → tested → deployed → monitored. Here's the overview…"},
+    {t:'sys', s:'↗ opening README.html'},
+    {t:'bot', s:"First — what are you starting from?"},
+    {t:'opts', o:['Build new','Bring my own agent'], pick:0},
+    {t:'bot', s:"Describe the agent in a sentence:"},
+    {t:'prompt', s:'a banking concierge for Meridian National that helps customers with their accounts'},
+    {t:'bot', s:"Who's it for?"},
+    {t:'opts', o:['Myself / team','Customers (external)'], pick:1},
+    {t:'sys', s:'→ external users · full ADLC · target = langsmith-deployments'},
+    {t:'bot', s:"What kind of agent?"},
+    {t:'opts', o:['Agent → deepagents','Workflow → langgraph','Prompt'], pick:0},
+    {t:'sys', s:'⛭ scaffolding deepagents · tracing ON from line one'},
+    {t:'ok', s:'✓ first trace received in LangSmith'},
+    {t:'link', label:'↗ view run', url:'smith.langchain.com/o/…/r/9f2a17'},
+    {t:'phase', s:'▸ Test'},
+    {t:'bot', s:"What matters most about this agent's answers?"},
+    {t:'opts', o:['groundedness','scope','tool-safety','show me outputs'], pick:[0,1,2]},
+    {t:'sys', s:'⚙ 31 cases (covering array) · one evaluator per check'},
+    {t:'link', label:'✓ built dataset', url:'smith.langchain.com/…/datasets/adf9'},
+    {t:'bot', s:"Grade a few yourself so we can trust the judges:"},
+    {t:'sys', s:'↗ annotation queue · human vs judge → 92% alignment ✓'},
+    {t:'ok', s:'✓ red→green · cheapest passing model selected'},
+    {t:'link', label:'↗ experiment', url:'smith.langchain.com/…/compare?…b952c5'},
+    {t:'phase', s:'▸ Deploy'},
+    {t:'bot', s:"Where should it run?"},
+    {t:'opts', o:['LangSmith Deployments','My own infra'], pick:0},
+    {t:'bot', s:"Auth?"},
+    {t:'opts', o:['OAuth','API key','SSO','none'], pick:0},
+    {t:'bot', s:"Frontend?"},
+    {t:'opts', o:['CopilotKit','agent-chat-ui','assistant-ui','own'], pick:1},
+    {t:'sys', s:'⛭ shipped · PR-triggered eval gate added (.github/workflows)'},
+    {t:'link', label:'↗ deployment', url:'smith.langchain.com/o/…/studio'},
+    {t:'phase', s:'▸ Monitor'},
+    {t:'bot', s:"Which checks run on live traffic, and how much to sample?"},
+    {t:'opts', o:['groundedness','scope','tool-safety'], pick:[0,1,2]},
+    {t:'opts', o:['10%','25%','100%'], pick:0},
+    {t:'bot', s:"Alert me on…"},
+    {t:'opts', o:['errors','latency','score drops','cost'], pick:[0,1,3]},
+    {t:'sys', s:'✓ online evals @10% · alerts → Slack'},
+    {t:'link', label:'↗ monitoring dashboard', url:'smith.langchain.com/…/dashboards/projects/fdd5'},
+    {t:'phase', s:'▸ Improve'},
+    {t:'bot', s:"Auto-route 👎 feedback + failing traces back into the dataset?"},
+    {t:'opts', o:['Yes','Not now'], pick:0},
+    {t:'sys', s:'✓ automation rule live · the loop is closed'},
+    {t:'sys', s:'↗ recap: dataset · experiment · deployment · dashboard · alerts — all linked'},
+    {t:'done', s:'🎉 In production — traced, tested, deployed, monitored, improving.', d:1200}
+  ];
+  var running=false, timers=[];
+  function sleep(ms){return new Promise(function(r){timers.push(setTimeout(r,ms));});}
+  function row(cls,html){var d=document.createElement('div');d.className='row '+cls;if(html!=null)d.innerHTML=html;body.appendChild(d);body.scrollTop=body.scrollHeight;return d;}
+  async function type(node,prefix,text,rate,cls){
+    node.innerHTML=prefix+'<span class="tx '+(cls||'')+'"></span><span class="cur"></span>';
+    var tx=node.querySelector('.tx');
+    for(var i=0;i<text.length;i++){ if(!running)return; tx.textContent+=text[i]; body.scrollTop=body.scrollHeight; await sleep(rate); }
+    var c=node.querySelector('.cur'); if(c) c.remove();
+  }
+  async function run(){
+    running=false; timers.forEach(clearTimeout); timers=[]; running=true; body.innerHTML='';
+    for(var i=0;i<seq.length && running;i++){
+      var st=seq[i];
+      if(st.t==='prompt'){ await type(row('user'),'<span class="pfx">›</span> ',st.s,30,st.cmd?'cmd':''); }
+      else if(st.t==='bot'){ await type(row('bot'),'<span class="pfx">◆</span> ',st.s,11); }
+      else if(st.t==='teach'){ var d=row('teach','<div class="h">'+st.title+'</div><div class="b"></div>'); await type(d.querySelector('.b'),'',st.s,9); }
+      else if(st.t==='opts'){ var d=row('opts'); st.o.forEach(function(o){var s=document.createElement('span');s.className='opt';s.textContent=o;d.appendChild(s);}); await sleep(500); var ps=d.querySelectorAll('.opt'); var picks=Array.isArray(st.pick)?st.pick:[st.pick]; if(running) picks.forEach(function(p){ if(ps[p]) ps[p].classList.add('sel'); }); await sleep(430); }
+      else if(st.t==='sys'){ row('sys',st.s); }
+      else if(st.t==='ok'){ row('ok',st.s); }
+      else if(st.t==='link'){ row('link', st.label+' · <span class="lnk">'+st.url+'</span>'); }
+      else if(st.t==='phase'){ row('phase',st.s); }
+      else if(st.t==='done'){ row('done',st.s); }
+      if(!running) return;
+      await sleep(st.d || (st.t==='prompt'?480 : st.t==='bot'?420 : 340));
+    }
+    running=false;
+  }
+  var btn=document.getElementById('simReplay');
+  if(btn) btn.addEventListener('click',function(){ run(); });
+  var started=false;
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(function(es){es.forEach(function(e){ if(e.isIntersecting && !started){ started=true; run(); } });},{threshold:.3}).observe(body);
+  } else { run(); }
+})();
+</script>
+</body>
+</html>
