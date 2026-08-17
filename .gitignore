@@ -1,0 +1,10 @@
+.env
+.env.*
+*.pem
+*.key
+*.crt
+credentials.json
+node_modules/
+__pycache__/
+.venv/
+.DS_Store
