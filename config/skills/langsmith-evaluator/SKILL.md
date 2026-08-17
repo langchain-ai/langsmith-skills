@@ -114,6 +114,12 @@ langsmith api info POST /api/v1/runs/rules
 
 Use `langsmith evaluator create-llm` to create a server-managed LLM-as-judge run rule. It requires `--model-config` plus exactly one target (`--dataset` or `--project`). Supply either `--prompt` and `--schema` JSON files or a Prompt Hub reference with `--hub-ref`.
 
+### Native CLI CRUD for LLM-as-Judge Run Rules
+
+The native lifecycle below manages **attached LLM-as-judge run rules**, not standalone `/platform/evaluators` definitions.
+
+**Create**
+
 ```bash
 langsmith evaluator create-llm \
   --name "Accuracy Judge" \
@@ -122,6 +128,47 @@ langsmith evaluator create-llm \
   --schema schema.json \
   --model-config model.json
 ```
+
+Use `--project` instead of `--dataset` for an online evaluator. Use `--hub-ref owner/prompt:latest` instead of `--prompt` and `--schema` when the judge prompt is stored in Prompt Hub.
+
+**Read**
+
+```bash
+# List all attached evaluator rules
+langsmith evaluator list --format json
+
+# Get every rule with this exact display name
+langsmith evaluator get "Accuracy Judge"
+
+# Narrow project rules with a project session ID
+langsmith evaluator get "Accuracy Judge" --session-id <project-session-id>
+```
+
+`get` is display-name based and may return multiple rules. It reports rule metadata and selected LLM fields, but does not export a complete inline prompt, schema, and model configuration. Use the ID-based API flow when a full-fidelity read is required.
+
+**Update / Replace**
+
+There is no separate `update` subcommand. Re-run `create-llm` with the same name and target plus `--replace`; the CLI prompts before PATCHing the matching rule. Supply the complete desired LLM configuration again.
+
+```bash
+langsmith evaluator create-llm \
+  --name "Accuracy Judge" \
+  --dataset "My Dataset" \
+  --prompt prompt-v2.json \
+  --schema schema-v2.json \
+  --model-config model-v2.json \
+  --replace
+```
+
+**Delete**
+
+```bash
+# Inspect every match before deleting
+langsmith evaluator get "Accuracy Judge"
+langsmith evaluator delete "Accuracy Judge"
+```
+
+`delete` is name-based and deletes **all workspace run rules with that display name**, even across different datasets or projects. If more than one rule matches and only one should be removed, do not use the native delete command; resolve the exact rule ID and use the granular API flow instead.
 
 For rapid local development or judges that require local packages, define a local evaluator and pass it to `evaluate(evaluators=[...])` instead.
 
