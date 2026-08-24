@@ -1,0 +1,54 @@
+evals/trace-instrument/environment/requirements.txt
+  s_167231c811888f::t_f5913ec3aa66c7 1-5
+evals/trace-instrument/task.toml
+  s_167231c811888f::t_f5913ec3aa66c7 1-10,39-66
+  s_dec8e7ce140607::t_fbae5a1f0e4729 13-22,28
+  s_dec8e7ce140607::t_67d5f9f5b23b61 11-12,23-27,29-38
+evals/trace-instrument/tests/test.sh
+  s_167231c811888f::t_f5913ec3aa66c7 1-16
+evals/trace-instrument/environment/chain_app/main.py
+  s_167231c811888f::t_f5913ec3aa66c7 1-33
+evals/trace-instrument/solution/solve.sh
+  s_167231c811888f::t_f5913ec3aa66c7 1-91
+evals/trace-instrument/instruction.md
+  s_167231c811888f::t_f5913ec3aa66c7 2-4,7-10
+  s_dec8e7ce140607::t_72f4d0a29072f4 5-6
+  h_fe5ed23bcee8dc 1
+evals/trace-instrument/tests/verify.py
+  s_dec8e7ce140607::t_aefa5a73b22469 8-12,32,36-37,82-118,121-141,191-193,195,198,200,204-206
+  s_dec8e7ce140607::t_ec963d3e14b83c 197,199,201-203
+  s_167231c811888f::t_f5913ec3aa66c7 1-7,13-31,33-35,38-81,119-120,142-190,194,196,207-218
+evals/trace-instrument/environment/Dockerfile
+  s_167231c811888f::t_f5913ec3aa66c7 1-30
+evals/trace-instrument/environment/plain_app/main.py
+  s_167231c811888f::t_f5913ec3aa66c7 1-44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "7bd9e7889df30041144be8f869e3c7b933921d4a",
+  "prompts": {},
+  "humans": {
+    "h_fe5ed23bcee8dc": {
+      "author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  },
+  "sessions": {
+    "s_167231c811888f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "de918690-fad1-43d6-9e6d-5a6ade582024",
+        "model": "claude-opus-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    },
+    "s_dec8e7ce140607": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "813582ad-fdbd-4c7a-aa8b-fd96fa954f32",
+        "model": "claude-opus-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
