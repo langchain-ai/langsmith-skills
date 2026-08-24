@@ -1,0 +1,61 @@
+.gitignore
+  s_167231c811888f::t_f5913ec3aa66c7 1-3,19
+  s_dec8e7ce140607::t_9a002484c3d116 4-18
+evals/run.py
+  s_167231c811888f::t_ea8450fca72a26 74-96
+  s_167231c811888f::t_dd83a973f4b276 106-139
+  s_167231c811888f::t_37dcf5997c264a 263-267
+  s_167231c811888f::t_e765c2fab04eb0 301-315
+  s_167231c811888f::t_935f18f26fc6bc 334
+  s_167231c811888f::t_70acf9fb223f32 242-244
+  s_167231c811888f::t_5f21b397664b7d 291-292
+  s_167231c811888f::t_6a22f1dde4c389 71-73
+  s_167231c811888f::t_ca1334990ea209 97-99,103-105
+  s_167231c811888f::t_9b14750995c14b 140-142,239-241
+  s_167231c811888f::t_395d4bcc18be13 245-247,260-262
+  s_167231c811888f::t_8e3e25c1a7dc19 268-270,288-290
+  s_167231c811888f::t_0929e9bfcfd43d 293-295,298-300
+  s_167231c811888f::t_ee669c5b3be2c9 316-318,331-333
+  s_167231c811888f::t_65dbde27d20c43 335-337
+  s_167231c811888f::t_fb885040a2c13d 1-70,100-102,143-238,248-259,271-287,296-297,319-330,338-348
+evals/HANDOFF.md
+  s_dec8e7ce140607::t_50802094b8e0e3 28-33,79-102,162-171
+  s_167231c811888f::t_035f5530815652 1-2,5-18,20-27,34-51,57,77-78,115-119,123-161
+  s_dec8e7ce140607::t_e916c77ac2d7c5 3-4,19,52-56,58-62,120-122
+  s_dec8e7ce140607::t_c5f481ab7d7110 63-76,103-114
+evals/langsmith_env.py
+  s_167231c811888f::t_f5913ec3aa66c7 1-65
+evals/pyproject.toml
+  s_167231c811888f::t_f5913ec3aa66c7 1-12
+evals/uv.lock
+  s_167231c811888f::t_f0156fc5af1f32 1-2540
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "9a997cc5b474d0c64c8ec8a4fe47c0f51350813c",
+  "prompts": {},
+  "humans": {
+    "h_fe5ed23bcee8dc": {
+      "author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  },
+  "sessions": {
+    "s_167231c811888f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "de918690-fad1-43d6-9e6d-5a6ade582024",
+        "model": "claude-opus-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    },
+    "s_dec8e7ce140607": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "813582ad-fdbd-4c7a-aa8b-fd96fa954f32",
+        "model": "claude-opus-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
