@@ -1,0 +1,22 @@
+evals/run.py
+  s_dec8e7ce140607::t_3217eeb761e35d 65-76,127-130,183,189-196,237,315,358-363
+  s_dec8e7ce140607::t_aedb748ceca999 263-266,325-326,350
+evals/langsmith_env.py
+  s_dec8e7ce140607::t_1e2741f8737dbc 29-61,63,68,98-106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "cd2f0c335f119e03b9fdde501cf79ba332f03ddd",
+  "prompts": {},
+  "sessions": {
+    "s_dec8e7ce140607": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "813582ad-fdbd-4c7a-aa8b-fd96fa954f32",
+        "model": "claude-opus-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
