@@ -1,0 +1,36 @@
+evals/trace-instrument/environment/Dockerfile
+  s_dec8e7ce140607::t_29dea721659cda 1-30
+evals/trace-instrument/environment/plain_app/main.py
+  s_dec8e7ce140607::t_29dea721659cda 1-44
+evals/trace-instrument/environment/requirements.txt
+  s_dec8e7ce140607::t_29dea721659cda 1-5
+evals/trace-instrument/tests/verify.py
+  s_dec8e7ce140607::t_29dea721659cda 1-218
+evals/trace-instrument/instruction.md
+  s_dec8e7ce140607::t_29dea721659cda 1-10
+evals/trace-instrument/solution/solve.sh
+  s_dec8e7ce140607::t_29dea721659cda 1-91
+evals/trace-instrument/environment/chain_app/main.py
+  s_dec8e7ce140607::t_29dea721659cda 1-33
+evals/trace-instrument/task.toml
+  s_dec8e7ce140607::t_29dea721659cda 1-10,34-61
+  s_dec8e7ce140607::t_81ab3505cdaedd 11-33
+evals/trace-instrument/tests/test.sh
+  s_dec8e7ce140607::t_29dea721659cda 1-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "d2d470e361125e72dc8391a3502ac08b68ee3e76",
+  "prompts": {},
+  "sessions": {
+    "s_dec8e7ce140607": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "813582ad-fdbd-4c7a-aa8b-fd96fa954f32",
+        "model": "claude-opus-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
