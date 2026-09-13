@@ -1,0 +1,14 @@
+[
+  {
+    "inputs": {"policy_topic": "returns"},
+    "outputs": {"expected_answer": "Unopened items may be returned within 30 days of delivery."}
+  },
+  {
+    "inputs": {"policy_topic": "shipping"},
+    "outputs": {"expected_answer": "Standard shipping takes 3-5 business days."}
+  },
+  {
+    "inputs": {"policy_topic": "warranty"},
+    "outputs": {"expected_answer": "Hardware carries a 24 month limited warranty."}
+  }
+]

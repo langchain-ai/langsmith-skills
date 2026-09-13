@@ -1,0 +1,91 @@
+schema_version = "1.3"
+
+[task]
+name = "langsmith-skills/offline-eval-setup"
+description = "Set up offline regression evaluation in LangSmith for a local app"
+
+[metadata]
+skills = ["langsmith-dataset", "langsmith-evaluator"]
+category = "langsmith"
+tags = ["dataset", "evaluator", "experiment", "regression"]
+#
+# PASS RULE
+# Pass iff the shipped test cases exist as a LangSmith dataset, an experiment
+# scored the app against every one of them, the scores discriminate the case the
+# app actually gets wrong, and results.json agrees with live LangSmith state.
+#
+# DELIBERATELY NOT A SINGLE-SKILL PROBE
+# One realistic user goal, scoring only the outcome a user would notice. An
+# earlier draft required one uploaded plus one local evaluator; no real user
+# asks for that, so mechanism is the stat evaluator_mechanism and never touches
+# reward.
+#
+# WHY C5 CHECKS A PATTERN, NOT A METRIC
+# The agent picks its own scoring metric, so no specific score can be asserted.
+# Instead the fixture is shaped so any sensible metric must rank the cases the
+# same way: the app answers `returns` and `shipping` per their references and
+# gets `warranty` wrong (it says 12 months, the cases expect 24), so the
+# warranty case must score strictly below the other two. Dictating a metric, an
+# evaluator name, or a mechanism would score a hidden preference.
+#
+# REWARD HACKS AND WHERE EACH DIES
+#   hand-written results.json, nothing actually run -> C1/C2/C3
+#   only one case scored                            -> C3
+#   constant-score evaluator                        -> C5
+#   "fixing" support_app so warranty matches        -> C4 (needs exactly one
+#                                                       mismatch; the
+#                                                       instruction also
+#                                                       forbids it)
+#   recording the experiment URL instead of the
+#   per-case scores                                 -> C6 (client.evaluate()
+#                                                       returns that URL, so it
+#                                                       proves nothing)
+#
+# INVALID RUN, NOT REWARD 0
+# LangSmith unreachable or an auth failure is an infrastructure fault. The
+# verifier writes /logs/verifier/invalid.txt and run.py reports infra (exit 3)
+# instead of a reward regression. Partial feedback at the deadline is
+# deliberately NOT treated this way: it is ambiguous between slow ingestion and
+# an agent that scored only some cases, and excusing it would mean this task
+# could never fail on partial scoring.
+#
+# KNOWN LIMIT OF C6
+# C6 proves the reported scores are TRUE, not that they were read back from
+# LangSmith: they can equally be taken from evaluate()'s return value. That is
+# deliberate -- the instruction asks for the scores, not for a particular way of
+# obtaining them, and requiring a readback would score a preferred path. C6
+# catches fabricated and partial reporting, which is what a user would notice.
+#
+# THE GATE IS THE PRIMARY SIGNAL
+# Reward is a correctness canary for the dataset/evaluator path. Whether both
+# skills auto-invoked is what this task is really watching.
+#
+# Run results are kept out of this repo; see evals/notes (local, gitignored).
+
+[agent]
+timeout_sec = 900.0
+
+[verifier]
+timeout_sec = 420.0
+user = "root"
+
+[verifier.env]
+LANGSMITH_API_KEY = "${LANGSMITH_API_KEY}"
+LANGSMITH_ENDPOINT = "${LANGSMITH_ENDPOINT}"
+# Experiment runs and their feedback ingest asynchronously, and server-side
+# evaluators add latency on top (61s observed for an online rule). Budget well
+# under the verifier timeout so a slow ingest polls rather than truncating.
+VERIFIER_BUDGET_SEC = "300"
+
+[environment]
+build_timeout_sec = 1800.0
+workdir = "/workspace"
+cpus = 2
+memory_mb = 4096
+storage_mb = 16384
+
+# LANGSMITH_DATASET and LANGSMITH_PROJECT are absent here on purpose: both are
+# per-trial and injected at invocation time via harbor's --ae / --ve.
+[environment.env]
+LANGSMITH_API_KEY = "${LANGSMITH_API_KEY}"
+LANGSMITH_ENDPOINT = "${LANGSMITH_ENDPOINT}"
