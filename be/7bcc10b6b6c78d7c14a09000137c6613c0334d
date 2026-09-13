@@ -1,0 +1,44 @@
+evals/offline-eval-setup/environment/support_app/main.py
+  s_dec8e7ce140607::t_a1357ebfef8278 1-35
+evals/offline-eval-setup/task.toml
+  s_dec8e7ce140607::t_ee32ff010f8410 1-88
+evals/offline-eval-setup/solution/solve.sh
+  s_dec8e7ce140607::t_7574f53734cceb 9-16
+  s_dec8e7ce140607::t_210f9da9702416 45,48,93
+  s_dec8e7ce140607::t_fd3049ae00ae01 1-8,17-44,46-47,49-92,94-132
+evals/offline-eval-setup/instruction.md
+  s_dec8e7ce140607::t_8bab68962c854b 1-13
+evals/offline-eval-setup/tests/verify.py
+  s_dec8e7ce140607::t_7574f53734cceb 217-237
+  s_dec8e7ce140607::t_7ceb7133af9557 238-245
+  s_dec8e7ce140607::t_2b742a5a09d70c 202,209-210,322-327,338
+  s_dec8e7ce140607::t_6291357afc6a59 1-201,203-208,211-216,246-321,328-337,339-354
+evals/offline-eval-setup/tests/fixtures/test_cases.json
+  s_dec8e7ce140607::t_6291357afc6a59 1-14
+evals/offline-eval-setup/environment/Dockerfile
+  s_dec8e7ce140607::t_6a629bb80a559c 1-30
+evals/offline-eval-setup/tests/test.sh
+  s_dec8e7ce140607::t_6406890360358d 1-26
+evals/HANDOFF.md
+  s_dec8e7ce140607::t_46486c11cfcfed 18-25,123-144,180-181
+evals/offline-eval-setup/environment/requirements.txt
+  s_dec8e7ce140607::t_feb8c58f2e6668 1-2
+evals/offline-eval-setup/environment/test_cases.json
+  s_dec8e7ce140607::t_399a3b5234b50d 1-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "be7bcc10b6b6c78d7c14a09000137c6613c0334d",
+  "prompts": {},
+  "sessions": {
+    "s_dec8e7ce140607": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "813582ad-fdbd-4c7a-aa8b-fd96fa954f32",
+        "model": "claude-opus-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
