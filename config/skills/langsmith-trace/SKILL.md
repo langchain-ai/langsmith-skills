@@ -261,7 +261,7 @@ Use `--include-io` or `--full` to include inputs/outputs (required for dataset g
 
 <tips>
 - **Start with traces** — they provide complete context needed for trajectory and dataset generation
-- Use `traces export --full` for bulk data destined for datasets
+- Use `trace export --full` for bulk data destined for datasets
 - Always specify `--project` to avoid mixing data from different projects
 - Use `/tmp` for temporary exports
 - Include `--include-metadata` for performance/cost analysis
