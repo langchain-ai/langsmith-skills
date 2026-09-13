@@ -1,0 +1,12 @@
+[project]
+name = "langsmith-skills-evals"
+version = "0.1.0"
+description = "Harbor regression evals for the langsmith-skills plugin"
+requires-python = ">=3.12"
+dependencies = [
+    "harbor[langsmith]==0.18.0",
+    "langsmith>=0.8.0",
+]
+
+[tool.uv]
+package = false

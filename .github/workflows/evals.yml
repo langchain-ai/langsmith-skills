@@ -1,0 +1,80 @@
+# Harbor regression evals for the skills in config/skills/.
+#
+# Manual only: every run starts a real agent against the live LangSmith API and
+# costs real time and money. Reward measures whether an agent following the
+# skill succeeds; it is NOT a measurement of how much the skill helps, so do
+# not read a passing control run as "the skill does nothing".
+name: evals
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: Task directory under evals/
+        default: trace-instrument
+      reps:
+        description: Repetitions per task
+        default: "1"
+      model:
+        description: Model id passed to the agent
+        default: claude-sonnet-4-6
+      no_skills:
+        description: Control run with skills omitted (informational)
+        type: boolean
+        default: false
+      langsmith_experiment:
+        description: Log each trial as a LangSmith experiment (keeps traces)
+        type: boolean
+        default: true
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Run evals
+        env:
+          LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+          LANGSMITH_ENDPOINT: https://api.smith.langchain.com
+          ANTHROPIC_BASE_URL: https://gateway.smith.langchain.com/anthropic
+          ANTHROPIC_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+          OPENAI_BASE_URL: https://gateway.smith.langchain.com/openai/v1
+          OPENAI_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+          TASK: ${{ inputs.task }}
+          REPS: ${{ inputs.reps }}
+          MODEL: ${{ inputs.model }}
+          NO_SKILLS: ${{ inputs.no_skills }}
+          LANGSMITH_EXPERIMENT: ${{ inputs.langsmith_experiment }}
+        run: |
+          args=(--task "$TASK" --reps "$REPS" -m "$MODEL" --fresh-env)
+          if [ "$NO_SKILLS" = "true" ]; then args+=(--no-skills); fi
+          if [ "$LANGSMITH_EXPERIMENT" = "true" ]; then args+=(--langsmith-experiment); fi
+          uv run --project evals python evals/run.py "${args[@]}"
+
+      # Job records only. The agent transcript is deliberately excluded: it can
+      # echo environment variables, and this artifact is downloadable.
+      - name: Upload job records
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-jobs
+          path: |
+            evals/jobs/**/result.json
+            evals/jobs/**/verifier/**
+            evals/jobs/**/artifacts/**
+          if-no-files-found: ignore
+
+      # Only when experiments are off. With experiments on, the projects are kept
+      # on purpose and hold the traces each experiment points at, so sweeping
+      # would delete the evidence a few hours after it was recorded.
+      - name: Sweep orphaned projects
+        if: always() && inputs.langsmith_experiment != true
+        env:
+          LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+        run: uv run --project evals python evals/run.py --sweep-orphans 6

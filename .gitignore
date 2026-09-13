@@ -1,0 +1,22 @@
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+
+# Secrets — never commit
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.jks
+credentials.json
+token.json
+
+# Eval run artifacts: transcripts can capture env vars
+evals/jobs/
+
+# Local-only analysis: run results, costs, comparisons
+evals/notes/
