@@ -167,10 +167,14 @@ client = Client()
 # Create dataset and add examples in one step
 dataset = client.create_dataset("My Dataset", description="Evaluation dataset")
 
+# Pass examples as a list of dicts. The parallel `inputs=`/`outputs=` lists
+# are still accepted but only as legacy keyword arguments.
 client.create_examples(
-    inputs=[{"query": "What is AI?"}, {"query": "Explain RAG"}],
-    outputs=[{"answer": "AI is..."}, {"answer": "RAG is..."}],
-    dataset_name="My Dataset",
+    dataset_id=dataset.id,
+    examples=[
+        {"inputs": {"query": "What is AI?"}, "outputs": {"answer": "AI is..."}},
+        {"inputs": {"query": "Explain RAG"}, "outputs": {"answer": "RAG is..."}},
+    ],
 )
 ```
 </python>
@@ -186,11 +190,20 @@ const dataset = await client.createDataset("My Dataset", {
   description: "Evaluation dataset",
 });
 
-await client.createExamples({
-  inputs: [{ query: "What is AI?" }, { query: "Explain RAG" }],
-  outputs: [{ answer: "AI is..." }, { answer: "RAG is..." }],
-  datasetName: "My Dataset",
-});
+// Pass an array of examples. The `{ inputs, outputs, datasetName }` form is
+// deprecated in the JS SDK; each example carries its own dataset_id.
+await client.createExamples([
+  {
+    inputs: { query: "What is AI?" },
+    outputs: { answer: "AI is..." },
+    dataset_id: dataset.id,
+  },
+  {
+    inputs: { query: "Explain RAG" },
+    outputs: { answer: "RAG is..." },
+    dataset_id: dataset.id,
+  },
+]);
 ```
 </typescript>
 </creating_datasets>
