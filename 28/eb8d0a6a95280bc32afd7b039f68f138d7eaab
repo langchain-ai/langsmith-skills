@@ -1,0 +1,19 @@
+config/skills/langsmith-dataset/SKILL.md
+  s_dec8e7ce140607::t_29dea721659cda 170-171,173-177,193-206
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "28eb8d0a6a95280bc32afd7b039f68f138d7eaab",
+  "prompts": {},
+  "sessions": {
+    "s_dec8e7ce140607": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "813582ad-fdbd-4c7a-aa8b-fd96fa954f32",
+        "model": "claude-opus-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
