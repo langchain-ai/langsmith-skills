@@ -1,0 +1,21 @@
+evals/HANDOFF.md
+  s_dec8e7ce140607::t_0151fa807465ca 145-172,175
+evals/offline-eval-setup/task.toml
+  s_dec8e7ce140607::t_81a194770cb4e4 73-88
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "0af95beeddfa53ddc8cf3c50fd9f21cc8d926cfd",
+  "prompts": {},
+  "sessions": {
+    "s_dec8e7ce140607": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "813582ad-fdbd-4c7a-aa8b-fd96fa954f32",
+        "model": "claude-opus-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
