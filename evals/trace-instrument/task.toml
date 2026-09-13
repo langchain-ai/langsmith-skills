@@ -1,0 +1,61 @@
+schema_version = "1.3"
+
+[task]
+name = "langsmith-skills/trace-instrument"
+description = "Instrument a LangChain app and a plain OpenAI-SDK app for LangSmith tracing"
+
+[metadata]
+skill = "langsmith-trace"
+category = "langsmith"
+tags = ["trace", "regression"]
+#
+# PASS RULE
+# Pass iff both apps trace into the trial project, the reported ids are the
+# trace roots, the plain app's pipeline steps appear as their own spans with its
+# LLM call nested, and both roots carry outputs.
+#
+# CHECKS SCORE SHAPE, NEVER RUN NAMES
+# Tracing main() or passing @traceable(name=...) is good instrumentation that a
+# name match would reject. So C3/C4 assert structure only: a root that is not
+# itself the LLM call, an llm run nested below it, and for the plain app at
+# least two non-llm step runs. Observed names are reported as stats.
+#
+# THE TOOL CALL IS NOT SCORED
+# chain_app is a ReAct loop, so whether the model reaches for get_track_count is
+# its decision, not the agent's -- the chain-side fix is env vars only.
+# Requiring it lets a definitionally correct solution fail. Presence of a tool
+# run is the stat chain_tool_run.
+#
+# THE GATE IS THE PRIMARY SIGNAL
+# Reward is a correctness canary proving the skill leads to a working result.
+# Whether the skill auto-invoked is what this task is really watching.
+#
+# Run results are kept out of this repo; see evals/notes (local, gitignored).
+
+[agent]
+timeout_sec = 900.0
+
+[verifier]
+timeout_sec = 180.0
+user = "root"
+
+[verifier.env]
+LANGSMITH_API_KEY = "${LANGSMITH_API_KEY}"
+LANGSMITH_ENDPOINT = "${LANGSMITH_ENDPOINT}"
+
+[environment]
+build_timeout_sec = 1800.0
+workdir = "/workspace"
+cpus = 2
+memory_mb = 4096
+storage_mb = 16384
+
+# LANGSMITH_TRACING is deliberately absent: enabling it is the agent's job for
+# chain_app. LANGSMITH_PROJECT is also absent because it is per-trial and is
+# injected at invocation time via harbor's --ae / --ve.
+[environment.env]
+LANGSMITH_API_KEY = "${LANGSMITH_API_KEY}"
+LANGSMITH_ENDPOINT = "${LANGSMITH_ENDPOINT}"
+OPENAI_API_KEY = "${OPENAI_API_KEY}"
+OPENAI_BASE_URL = "${OPENAI_BASE_URL}"
+OPENAI_API_BASE = "${OPENAI_BASE_URL}"
