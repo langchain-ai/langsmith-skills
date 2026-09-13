@@ -1,0 +1,19 @@
+config/skills/langsmith-trace/SKILL.md
+  s_dec8e7ce140607::t_29dea721659cda 264
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "c4c7d90bd81b6bcd1b05f2a4d822a0ce02ea6406",
+  "prompts": {},
+  "sessions": {
+    "s_dec8e7ce140607": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "813582ad-fdbd-4c7a-aa8b-fd96fa954f32",
+        "model": "claude-opus-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
