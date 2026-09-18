@@ -59,7 +59,7 @@ npm install langsmith openai
 <cli_feedback>
 After an actual CLI failure, undocumented workaround, confusing output, or missing capability, submit one concise product-feedback note per distinct issue in the task. Do not report routine successes or low evaluation scores/application failures unrelated to the CLI.
 
-**Release gate (draft):** `v0.2.57` does not contain the feedback command. Before publishing this guidance, replace this gate with the first released version containing it and verify SaaS and BYOC submissions.
+**CLI requirement:** `langsmith feedback` requires [LangSmith CLI v0.2.58](https://github.com/langchain-ai/langsmith-cli/releases/tag/v0.2.58) or later. Check the installed version with `langsmith --version`.
 
 Check `langsmith feedback --help` for `feedback <note>` and `--category`; if unavailable, skip feedback without raw HTTP or unreleased builds. Use the existing authenticated profile, endpoint, and workspace. Feedback goes to LangSmith Cloud, including through the BYOC relay; skip standalone self-hosted. Respect user/organization restrictions and ask first if permission to send feedback is unclear.
 

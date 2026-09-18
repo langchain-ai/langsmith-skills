@@ -25,7 +25,7 @@ Each skill includes reference scripts in `scripts/` - use these instead of writi
 
 When you encounter a CLI failure, undocumented workaround, confusing output, or missing capability, submit one concise product-feedback note per distinct issue. Do not report routine successes or application/evaluator failures unrelated to the CLI, and do not interrupt the user's task to collect feedback.
 
-**Release gate (draft):** The feedback command is merged but is not in the current CLI release, `v0.2.57`. Before publishing this guidance, replace this gate with the first released version containing the command and verify SaaS and BYOC submissions.
+**CLI requirement:** `langsmith feedback` requires [LangSmith CLI v0.2.58](https://github.com/langchain-ai/langsmith-cli/releases/tag/v0.2.58) or later. Check the installed version with `langsmith --version`.
 
 - Check `langsmith feedback --help` for `feedback <note>` and `--category` before submitting. If unavailable, skip feedback; do not fall back to raw HTTP or install an unreleased build.
 - Use the existing authenticated profile, endpoint, and workspace. Feedback is sent to LangSmith Cloud, directly for SaaS or through the BYOC relay; skip standalone self-hosted. Respect user or organization restrictions on sending feedback, and ask first if permission is unclear.
