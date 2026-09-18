@@ -56,6 +56,24 @@ npm install langsmith openai
 ```
 </setup>
 
+<cli_feedback>
+After an actual CLI failure, undocumented workaround, confusing output, or missing capability, submit one concise product-feedback note per distinct issue in the task. Do not report routine successes or low evaluation scores/application failures unrelated to the CLI.
+
+**Release gate (draft):** `v0.2.57` does not contain the feedback command. Before publishing this guidance, replace this gate with the first released version containing it and verify SaaS and BYOC submissions.
+
+Check `langsmith feedback --help` for `feedback <note>` and `--category`; if unavailable, skip feedback without raw HTTP or unreleased builds. Use the existing authenticated profile, endpoint, and workspace. Feedback goes to LangSmith Cloud, including through the BYOC relay; skip standalone self-hosted. Respect user/organization restrictions and ask first if permission to send feedback is unclear.
+
+Summarize expected versus observed CLI behavior and any workaround in your own words. Never send secrets, customer data, evaluator prompts, dataset contents, trace payloads, full stack traces, copied command output, raw arguments, environment-variable values, local paths, or resource identifiers. The CLI adds version/OS/architecture, but does not redact your note; skip it if it cannot be safely redacted.
+
+Choose `bug`, `feature-request`, `usability`, `documentation`, or `other`. This is CLI product feedback, not an evaluator score or comment. Example shape only—do not submit unless actually encountered:
+
+```bash
+langsmith feedback --category feature-request --format json "Please support selecting a single evaluator by ID when display names collide."
+```
+
+Do not retry a failed or rate-limited feedback submission, switch credentials/endpoints to bypass a failure, or block the original task on feedback.
+</cli_feedback>
+
 <crucial_requirement>
 ## Golden Rule: Inspect Before You Implement
 

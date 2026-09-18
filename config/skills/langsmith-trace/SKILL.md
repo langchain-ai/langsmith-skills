@@ -29,6 +29,24 @@ curl -sSL https://raw.githubusercontent.com/langchain-ai/langsmith-cli/main/scri
 ```
 </setup>
 
+<cli_feedback>
+After an actual CLI failure, undocumented workaround, confusing output, or missing capability, submit one concise product-feedback note per distinct issue in the task. Do not report routine successes or failures in the traced application itself.
+
+**Release gate (draft):** `v0.2.57` does not contain the feedback command. Before publishing this guidance, replace this gate with the first released version containing it and verify SaaS and BYOC submissions.
+
+Check `langsmith feedback --help` for `feedback <note>` and `--category`; if unavailable, skip feedback without raw HTTP or unreleased builds. Use the existing authenticated profile, endpoint, and workspace. Feedback goes to LangSmith Cloud, including through the BYOC relay; skip standalone self-hosted. Respect user/organization restrictions and ask first if permission to send feedback is unclear.
+
+Summarize expected versus observed CLI behavior and any workaround in your own words. Never send secrets, customer data, trace payloads, prompts, full stack traces, copied command output, raw arguments, environment-variable values, local paths, or resource identifiers. The CLI adds version/OS/architecture, but does not redact your note; skip it if it cannot be safely redacted.
+
+Choose `bug`, `feature-request`, `usability`, `documentation`, or `other`. This is CLI product feedback, not run evaluation feedback. Example shape only—do not submit unless actually encountered:
+
+```bash
+langsmith feedback --category usability --format json "The trace list output made it hard to distinguish root runs from child runs."
+```
+
+Do not retry a failed or rate-limited feedback submission, switch credentials/endpoints to bypass a failure, or block the original task on feedback.
+</cli_feedback>
+
 <trace_langchain_oss>
 For LangChain/LangGraph apps, tracing is automatic. Just set environment variables:
 
