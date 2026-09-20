@@ -1,0 +1,23 @@
+config/skills/langsmith-custom-apps/SKILL.md
+  s_bdbe6eca23daac::t_5155f9c116b392 1-175
+config/AGENTS.md
+  s_bdbe6eca23daac::t_222c541602580f 13
+README.md
+  s_bdbe6eca23daac::t_222c541602580f 93,99
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "b201d405f8ebf83a6ec6bfc9f2cd943c451c354f",
+  "prompts": {},
+  "sessions": {
+    "s_bdbe6eca23daac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fbb10c6c-3d37-4d3a-81d8-45ebef660ea5",
+        "model": "claude-opus-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
