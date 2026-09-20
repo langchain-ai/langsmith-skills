@@ -10,6 +10,7 @@ This project uses skills that contain up-to-date patterns and working reference 
 - **langsmith-trace** - Invoke for ANY trace querying or analysis
 - **langsmith-dataset** - Invoke for ANY dataset creation from traces
 - **langsmith-evaluator** - Invoke for ANY evaluator creation
+- **langsmith-custom-apps** - Invoke for ANY LangSmith Custom App work (building, replicating, or sharing one)
 
 ## Debugging Flow: Build → Trace → Dataset → Evaluate
 
