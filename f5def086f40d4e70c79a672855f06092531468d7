@@ -1,0 +1,14 @@
+LICENSE
+  h_fe5ed23bcee8dc 1-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "f5def086f40d4e70c79a672855f06092531468d7",
+  "prompts": {},
+  "humans": {
+    "h_fe5ed23bcee8dc": {
+      "author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
