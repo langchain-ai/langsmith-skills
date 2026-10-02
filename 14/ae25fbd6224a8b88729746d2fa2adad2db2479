@@ -1,0 +1,24 @@
+README.md
+  h_fe5ed23bcee8dc 93,100,102
+config/AGENTS.md
+  h_fe5ed23bcee8dc 14
+config/skills/langsmith-online-eval-engineering/SKILL.md
+  h_fe5ed23bcee8dc 1-142
+config/skills/langsmith-online-eval-engineering/references/evaluator-design.md
+  h_fe5ed23bcee8dc 1-134
+config/skills/langsmith-online-eval-engineering/references/langsmith-api.md
+  h_fe5ed23bcee8dc 1-192
+config/skills/langsmith-online-eval-engineering/references/trace-inspection.md
+  h_fe5ed23bcee8dc 1-124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "14ae25fbd6224a8b88729746d2fa2adad2db2479",
+  "prompts": {},
+  "humans": {
+    "h_fe5ed23bcee8dc": {
+      "author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
