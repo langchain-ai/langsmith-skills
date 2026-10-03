@@ -1,0 +1,182 @@
+[
+  {
+    "inputs": {
+      "question": "What is the capital of France?"
+    },
+    "outputs": {
+      "answer": "The capital of France is Paris.",
+      "expected_tool_use": false
+    }
+  },
+  {
+    "inputs": {
+      "question": "What is 25 * 37 + 14?"
+    },
+    "outputs": {
+      "answer": "939",
+      "expected_tool_use": true
+    }
+  },
+  {
+    "inputs": {
+      "question": "Convert 72 degrees Fahrenheit to Celsius."
+    },
+    "outputs": {
+      "answer": "22.22 degrees Celsius",
+      "expected_tool_use": true
+    }
+  },
+  {
+    "inputs": {
+      "question": "Who wrote the novel '1984'?"
+    },
+    "outputs": {
+      "answer": "George Orwell wrote the novel '1984'.",
+      "expected_tool_use": false
+    }
+  },
+  {
+    "inputs": {
+      "question": "What is the square root of 144?"
+    },
+    "outputs": {
+      "answer": "12",
+      "expected_tool_use": true
+    }
+  },
+  {
+    "inputs": {
+      "question": "Summarize the theory of relativity in one sentence."
+    },
+    "outputs": {
+      "answer": "Einstein's theory of relativity describes how space and time are interwoven and how gravity arises from the curvature of spacetime caused by mass and energy.",
+      "expected_tool_use": false
+    }
+  },
+  {
+    "inputs": {
+      "question": "What is the chemical formula for water?"
+    },
+    "outputs": {
+      "answer": "H2O",
+      "expected_tool_use": false
+    }
+  },
+  {
+    "inputs": {
+      "question": "If a train travels at 60 mph for 2.5 hours, how far does it go?"
+    },
+    "outputs": {
+      "answer": "150 miles",
+      "expected_tool_use": true
+    }
+  },
+  {
+    "inputs": {
+      "question": "What are the three states of matter?"
+    },
+    "outputs": {
+      "answer": "The three states of matter are solid, liquid, and gas.",
+      "expected_tool_use": false
+    }
+  },
+  {
+    "inputs": {
+      "question": "Calculate the area of a circle with radius 7."
+    },
+    "outputs": {
+      "answer": "Approximately 153.94 square units",
+      "expected_tool_use": true
+    }
+  },
+  {
+    "inputs": {
+      "question": "What is the largest planet in our solar system?"
+    },
+    "outputs": {
+      "answer": "Jupiter is the largest planet in our solar system.",
+      "expected_tool_use": false
+    }
+  },
+  {
+    "inputs": {
+      "question": "What is 15% of 200?"
+    },
+    "outputs": {
+      "answer": "30",
+      "expected_tool_use": true
+    }
+  },
+  {
+    "inputs": {
+      "question": "Explain what photosynthesis is in simple terms."
+    },
+    "outputs": {
+      "answer": "Photosynthesis is the process by which plants use sunlight, water, and carbon dioxide to produce oxygen and glucose for energy.",
+      "expected_tool_use": false
+    }
+  },
+  {
+    "inputs": {
+      "question": "What is the boiling point of water in Kelvin?"
+    },
+    "outputs": {
+      "answer": "373.15 Kelvin",
+      "expected_tool_use": true
+    }
+  },
+  {
+    "inputs": {
+      "question": "Who painted the Mona Lisa?"
+    },
+    "outputs": {
+      "answer": "Leonardo da Vinci painted the Mona Lisa.",
+      "expected_tool_use": false
+    }
+  },
+  {
+    "inputs": {
+      "question": "What is the derivative of x^3 + 2x?"
+    },
+    "outputs": {
+      "answer": "3x^2 + 2",
+      "expected_tool_use": true
+    }
+  },
+  {
+    "inputs": {
+      "question": "Name the four oceans of the world."
+    },
+    "outputs": {
+      "answer": "The four main oceans are the Pacific, Atlantic, Indian, and Arctic oceans.",
+      "expected_tool_use": false
+    }
+  },
+  {
+    "inputs": {
+      "question": "If you have 3 apples and buy 5 more, then give away 2, how many do you have?"
+    },
+    "outputs": {
+      "answer": "6 apples",
+      "expected_tool_use": true
+    }
+  },
+  {
+    "inputs": {
+      "question": "What does DNA stand for?"
+    },
+    "outputs": {
+      "answer": "DNA stands for deoxyribonucleic acid.",
+      "expected_tool_use": false
+    }
+  },
+  {
+    "inputs": {
+      "question": "Convert 5 kilometers to miles."
+    },
+    "outputs": {
+      "answer": "Approximately 3.11 miles",
+      "expected_tool_use": true
+    }
+  }
+]
