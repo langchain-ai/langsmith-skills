@@ -7,6 +7,11 @@ description: "INVOKE THIS SKILL when building evaluation pipelines for LangSmith
 Three core components: **(1) Creating Evaluators** - LLM-as-Judge, custom code; **(2) Defining Run Functions** - capture agent outputs/trajectories for evaluation; **(3) Running Evaluations** - locally with `evaluate()` or auto-run via uploaded evaluators. Python and TypeScript examples included.
 </oneliner>
 
+For online author → test → review → publish, follow
+[Author, preview, and publish](../langsmith-online-eval-engineering/references/author-test-publish.md).
+Its local Python preview and exact-artifact checks use the direct SDK contract, not the CLI wrapper below.
+Never substitute production attachment for preview or require UI copy/paste.
+
 <setup>
 Environment Variables
 

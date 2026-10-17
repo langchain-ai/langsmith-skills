@@ -17,7 +17,12 @@ and datasets. An online evaluation rule attaches an evaluator to matching
 production runs or threads.
 
 Read [LangSmith API](references/langsmith-api.md) before creating or modifying
-evaluators.
+evaluators. For “test on these traces, show results, then publish,” follow
+[Author, preview, and publish](references/author-test-publish.md): author in the
+user's project, preview without production attachment, review the proposed
+scope, and publish the exact tested artifact through the SDK. Do not ask the
+user to copy code into the UI. The bundled local Python preview helper is not
+a hosted sandbox or a replacement for runtime compatibility checks.
 
 ## 1. Inspect representative behavior
 
