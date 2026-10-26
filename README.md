@@ -90,12 +90,13 @@ export ANTHROPIC_API_KEY=<your-key>   # For Anthropic models
 
 Then run your coding agent from the directory where you installed (for local installs) or from anywhere (for global installs).
 
-## Available Skills (5)
+## Available Skills (6)
 
 ### LangSmith
 - **langsmith-trace** - Query and export traces (includes helper scripts)
 - **langsmith-dataset** - Generate evaluation datasets from traces (includes helper scripts)
 - **langsmith-evaluator** - Create custom evaluators (includes helper scripts)
+- **langsmith-experiment-diagnosis** - Find low-scoring experiment examples, explain likely causes, and propose fixes
 - **langsmith-custom-apps** - Build, replicate, verify, and share LangSmith Custom Apps
 - **langsmith-online-eval-engineering** - Design, test, and attach online evaluators for production traces and conversation threads
 
