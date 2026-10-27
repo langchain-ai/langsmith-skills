@@ -15,18 +15,36 @@ environment. Never hard-code them.
 
 ## Inspect traces
 
+Use `client.runs.query()` (`POST /api/v2/runs/query`). `client.list_runs()`
+calls the deprecated v1 query endpoint, which is far more rate-limited and is
+removed in Feb 2027. `runs.query` takes project UUIDs, not
+names, and only searches the last 24 hours unless `min_start_time` is set.
+The `run_type` filter parameter takes uppercase values (`"LLM"`, `"TOOL"`), but
+returned runs still report lowercase `run_type` and `status` (`"llm"`, `"success"`).
+
 ```python
+import asyncio
 import json
+from datetime import datetime, timedelta, timezone
 
-runs = list(
-    client.list_runs(
-        project_name=project_name,
+
+async def sample_root_runs(project_name: str, limit: int = 5):
+    project = await client.aread_project(project_name=project_name)
+    runs = []
+    async for run in client.runs.query(
+        project_ids=[str(project.id)],
         is_root=True,
-        limit=5,
-    )
-)
+        min_start_time=datetime.now(timezone.utc) - timedelta(days=7),
+        page_size=limit,
+        selects=["ID", "NAME", "RUN_TYPE", "STATUS", "INPUTS", "OUTPUTS"],
+    ):
+        runs.append(run)
+        if len(runs) >= limit:
+            break
+    return runs
 
-for run in runs:
+
+for run in asyncio.run(sample_root_runs(project_name)):
     print(run.id, run.name, run.run_type, run.status)
     print(json.dumps(run.inputs, default=str)[:2000])
     print(json.dumps(run.outputs, default=str)[:2000])
