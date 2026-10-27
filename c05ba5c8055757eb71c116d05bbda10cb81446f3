@@ -1,0 +1,23 @@
+README.md
+  s_54d59ca27ff003::t_0232648c86b6d6 93,99
+config/AGENTS.md
+  s_54d59ca27ff003::t_0232648c86b6d6 13
+config/skills/langsmith-experiment-diagnosis/SKILL.md
+  s_54d59ca27ff003::t_0d1d2f67ed44bc 1-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c05ba5c8055757eb71c116d05bbda10cb81446f3",
+  "prompts": {},
+  "sessions": {
+    "s_54d59ca27ff003": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a14660-8d4d-7dc3-b26b-205b5699f103",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
