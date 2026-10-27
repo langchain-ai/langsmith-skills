@@ -143,7 +143,7 @@ Run `npx tsc --noEmit` and `npm run build` before every push; the build is what 
 </verify_without_browser>
 
 <query_gotchas>
-- `POST /api/v1/runs/query` caps `limit` at **100**. Page with `response.cursors.next`, impose your own hard page cap so a busy project cannot spin forever, and tell the reader in the UI when that cap truncated a scan.
+- Query rows with `POST /api/v2/runs/query`, never the deprecated `/api/v1/runs/query` (supported until 31 Jan 2027, removed Feb 2027). The body takes `project_ids` (UUIDs, not names), `min_start_time` (defaults to the **last 24 hours**, so set it explicitly), `page_size` (max 1000), and `selects` (UPPER_SNAKE names like `NAME` or `INPUTS`; the default returns `ID` only). It returns `{ items, next_cursor }`: feed `next_cursor` back as `cursor`, impose your own hard page cap so a busy project cannot spin forever, and tell the reader in the UI when that cap truncated a scan.
 - `search(name, "x")` is **rejected** by the filter DSL. Verified working: `eq(name, "read_file")`, `or(eq(name,"a"), eq(name,"b"))`, `eq(run_type, "tool")`, `eq(is_root, true)`, `eq(status, "error")`, `gte(start_time, "<iso>")`, `has(tags, "prod")`.
 - Metadata equality is **two paired clauses**, not `eq(metadata.key, …)`:
 
@@ -151,7 +151,7 @@ Run `npx tsc --noEmit` and `npm run build` before every push; the build is what 
 and(eq(metadata_key, "ls_agent_purpose"), eq(metadata_value, "coding"))
 ```
 
-- Prefer `POST /api/v1/runs/stats` and `POST /api/v1/runs/group/stats` for any headline number — server-side aggregates with no row limit — and reserve `runs/query` for rows you actually need to inspect.
+- Prefer `POST /api/v1/runs/stats` and `POST /api/v1/runs/group/stats` for any headline number — server-side aggregates with no row limit — and reserve `v2/runs/query` for rows you actually need to inspect. The stats endpoints have no v2 equivalent and are not deprecated: only the v1 *query* endpoints are being retired, so do not "upgrade" other `/api/v1/...` calls to guessed v2 paths.
 - Tool-call `inputs` arrive in **two shapes** depending on how the agent serializes them: `{"file_path": "/x"}` and `{"input": "{\"file_path\":\"/x\"}"}`. Parse the inner JSON inside a `try`/`catch` and handle both, or you will silently count a fraction of the data.
 - **Probe before assuming an endpoint exists.** Some things that feel like they must be queryable are not: there is no public endpoint listing an agent's skills or a Fleet roster. When no authoritative list exists, derive one from traces and state that limitation in the UI rather than implying completeness.
 - Treat everything read from a trace as untrusted: render names as text (never `dangerouslySetInnerHTML`), validate ids before they reach a filter string, and interpolate only allowlisted values into the DSL.

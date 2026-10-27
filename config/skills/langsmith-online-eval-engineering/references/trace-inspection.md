@@ -7,13 +7,33 @@ Always inspect traces before building an evaluator. Never guess field names.
 ## Procedure
 
 1. Ask the user for their LangSmith project name.
-2. Fetch 3--5 recent traces:
+2. Fetch 3--5 recent traces with `client.runs.query()` (`POST /api/v2/runs/query`), not the deprecated `client.list_runs()` (v1 endpoint removed Feb 2027). It takes the project UUID, defaults to the last 24 hours, and returns only `ID` unless `selects` asks for more:
 
 ```python
+import asyncio
+from datetime import datetime, timedelta, timezone
+
 from langsmith import Client
 
 client = Client()
-runs = list(client.list_runs(project_name="<project>", limit=5))
+
+
+async def recent_runs(project_name: str, limit: int = 5):
+    project = await client.aread_project(project_name=project_name)
+    runs = []
+    async for run in client.runs.query(
+        project_ids=[str(project.id)],
+        min_start_time=datetime.now(timezone.utc) - timedelta(days=7),
+        page_size=limit,
+        selects=["ID", "NAME", "RUN_TYPE", "INPUTS", "OUTPUTS"],
+    ):
+        runs.append(run)
+        if len(runs) >= limit:
+            break
+    return runs
+
+
+runs = asyncio.run(recent_runs("<project>"))
 ```
 
 3. For each run, print:
