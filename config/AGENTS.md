@@ -10,6 +10,7 @@ This project uses skills that contain up-to-date patterns and working reference 
 - **langsmith-trace** - Invoke for ANY trace querying or analysis
 - **langsmith-dataset** - Invoke for ANY dataset creation from traces
 - **langsmith-evaluator** - Invoke for ANY evaluator creation
+- **langsmith-experiment-diagnosis** - Invoke for diagnosing low-scoring experiment examples and proposing fixes
 - **langsmith-custom-apps** - Invoke for ANY LangSmith Custom App work (building, replicating, or sharing one)
 - **langsmith-online-eval-engineering** - Invoke for online evaluators attached to production tracing projects or conversation threads
 
