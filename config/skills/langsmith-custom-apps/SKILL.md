@@ -124,9 +124,10 @@ You cannot click the app, and a bug in its data layer renders as a plausible emp
 2. **Capture real rows** with the CLI into fixtures:
 
 ```bash
-langsmith api runs/query -X POST --workspace <ws-uuid> \
-  -F 'session[]=<project-uuid>' -F 'filter=eq(run_type, "tool")' \
-  -F 'select[]=id' -F 'select[]=trace_id' -F 'select[]=inputs' -F 'limit=100' \
+langsmith api /api/v2/runs/query -X POST --workspace <ws-uuid> \
+  -F 'project_ids[]=<project-uuid>' -F 'min_start_time=<iso-start>' \
+  -F 'filter=eq(run_type, "tool")' \
+  -F 'selects[]=ID' -F 'selects[]=TRACE_ID' -F 'selects[]=INPUTS' -F 'page_size=100' \
   > /tmp/fixtures/tools.json
 ```
 
