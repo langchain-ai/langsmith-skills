@@ -17,6 +17,7 @@ Ingestion is asynchronous and feedback lands after its run, so every check
 polls for the structure it needs until a shared deadline expires.
 """
 
+import asyncio
 import json
 import os
 import sys
@@ -24,6 +25,15 @@ import time
 from pathlib import Path
 
 from langsmith import Client
+
+
+def query_runs(**params) -> list:
+    """`Client.runs` is async: collect its pages on a fresh client and loop."""
+
+    async def collect():
+        return [r async for r in Client().runs.query(**params)]
+
+    return asyncio.run(collect())
 
 WORKSPACE = Path("/workspace")
 FIXTURES = Path("/tests/fixtures")
@@ -192,7 +202,11 @@ def main() -> int:
     def fetch_scored():
         runs, feedback = [], {}
         for exp in experiments:
-            rs = [r for r in client.list_runs(project_id=exp.id, is_root=True)]
+            rs = query_runs(
+                project_ids=[str(exp.id)],
+                is_root=True,
+                selects=["ID", "NAME", "ERROR", "INPUTS", "OUTPUTS"],
+            )
             runs.extend(rs)
             if rs:
                 for fb in client.list_feedback(run_ids=[r.id for r in rs]):

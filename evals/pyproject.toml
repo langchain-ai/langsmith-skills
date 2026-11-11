@@ -5,7 +5,7 @@ description = "Harbor regression evals for the langsmith-skills plugin"
 requires-python = ">=3.12"
 dependencies = [
     "harbor[langsmith]==0.18.0",
-    "langsmith>=0.8.0",
+    "langsmith>=0.10.15",
 ]
 
 [tool.uv]

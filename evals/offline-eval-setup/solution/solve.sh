@@ -57,6 +57,7 @@ langsmith evaluator upload evaluator_uploaded.py \
   --dataset "$LANGSMITH_DATASET"
 
 python - <<'PYEOF'
+import asyncio
 import json
 import os
 import sys
@@ -64,6 +65,16 @@ import time
 from pathlib import Path
 
 from langsmith import Client
+
+
+def query_runs(**params) -> list:
+    """`Client.runs` is async: collect its pages on a fresh client and loop."""
+
+    async def collect():
+        return [r async for r in Client().runs.query(**params)]
+
+    return asyncio.run(collect())
+
 
 sys.path.insert(0, "/workspace")
 from support_app.main import chain
@@ -101,7 +112,11 @@ report: list[dict] = []
 while time.time() < deadline:
     report = []
     for project in client.list_projects(reference_dataset_id=dataset.id):
-        for run in client.list_runs(project_id=project.id, is_root=True):
+        for run in query_runs(
+            project_ids=[str(project.id)],
+            is_root=True,
+            selects=["ID", "REFERENCE_EXAMPLE_ID", "OUTPUTS"],
+        ):
             example = examples.get(str(run.reference_example_id))
             if example is None:
                 continue

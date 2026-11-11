@@ -1,4 +1,4 @@
-langsmith>=0.8.0
+langsmith>=0.10.15
 langchain>=1.2.0
 langgraph>=1.0.0
 langchain-openai>=1.0.0

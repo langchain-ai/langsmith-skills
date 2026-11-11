@@ -1073,7 +1073,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "harbor", extras = ["langsmith"], specifier = "==0.18.0" },
-    { name = "langsmith", specifier = ">=0.8.0" },
+    { name = "langsmith", specifier = ">=0.10.15" },
 ]
 
 [[package]]

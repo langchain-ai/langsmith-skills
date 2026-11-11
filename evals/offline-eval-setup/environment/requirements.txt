@@ -1,2 +1,2 @@
-langsmith>=0.8.0
+langsmith>=0.10.15
 langchain-core>=1.0.0

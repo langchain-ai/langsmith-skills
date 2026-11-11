@@ -127,8 +127,6 @@ the LangSmith key).
 5. `langsmith-evaluator/SKILL.md` states that returning `{"metric_name": value}` from an
    evaluator will error, but rules doing exactly that run successfully. Resolve which is
    right before any verifier depends on it.
-6. `langsmith` SDK prints a `list_runs()` deprecation (removal after Jan 2027) — port to
-   `client.runs.query()` eventually.
-7. **The fixture is the skill's own example.** `trace-instrument`'s `plain_app` reuses
+6. **The fixture is the skill's own example.** `trace-instrument`'s `plain_app` reuses
    `rag_pipeline`/`retrieve_docs`/`generate_answer` verbatim from the trace skill. Until it
    diverges, the task rewards recall over transfer.
