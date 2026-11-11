@@ -16,9 +16,9 @@ LANGSMITH_PROJECT=your-project-name                   # Optional: default projec
 LANGSMITH_WORKSPACE_ID=your-workspace-id              # Optional: for org-scoped keys
 ```
 
-Authentication is REQUIRED: either set the `LANGSMITH_API_KEY` environment variable, or pass the `--api-key` flag to CLI commands (preferred):
+Authentication is REQUIRED. For agents, set the `LANGSMITH_API_KEY` environment variable (preferred); every `langsmith` command reads it automatically. To pass a key for a single command, use `--api-key`:
 ```bash
-langsmith trace list --project my-project --api-key $LANGSMITH_API_KEY
+langsmith traces list --project my-project --api-key "$LANGSMITH_API_KEY"
 ```
 
 **IMPORTANT:** Always check the environment variables or `.env` file for `LANGSMITH_PROJECT` before querying or interacting with LangSmith. This tells you which project contains the relevant traces and data. If the LangSmith project is not available, use your best judgement to identify the right one.
@@ -32,16 +32,16 @@ curl -sSL https://raw.githubusercontent.com/langchain-ai/langsmith-cli/main/scri
 <cli_feedback>
 After an actual CLI failure, undocumented workaround, confusing output, or missing capability, submit one concise product-feedback note per distinct issue in the task. Do not report routine successes or failures in the traced application itself.
 
-**CLI requirement:** `langsmith feedback` requires [LangSmith CLI v0.2.58](https://github.com/langchain-ai/langsmith-cli/releases/tag/v0.2.58) or later. Check the installed version with `langsmith --version`.
+**CLI requirement:** `langsmith report` requires [LangSmith CLI v0.3.5](https://github.com/langchain-ai/langsmith-cli/releases/tag/v0.3.5) or later. Check the installed version with `langsmith --version`.
 
-Check `langsmith feedback --help` for `feedback <note>` and `--category`; if unavailable, skip feedback without raw HTTP or unreleased builds. Use the existing authenticated profile, endpoint, and workspace. Feedback goes to LangSmith Cloud, including through the BYOC relay; skip standalone self-hosted. Respect user/organization restrictions and ask first if permission to send feedback is unclear.
+Check `langsmith report --help` for `report <note>` and `--category`; if unavailable, skip feedback without raw HTTP or unreleased builds. Use the existing authenticated profile, endpoint, and workspace. Feedback goes to LangSmith Cloud, including through the BYOC relay; skip standalone self-hosted. Respect user/organization restrictions and ask first if permission to send feedback is unclear.
 
 Summarize expected versus observed CLI behavior and any workaround in your own words. Never send secrets, customer data, trace payloads, prompts, full stack traces, copied command output, raw arguments, environment-variable values, local paths, or resource identifiers. The CLI adds version/OS/architecture, but does not redact your note; skip it if it cannot be safely redacted.
 
 Choose `bug`, `feature-request`, `usability`, `documentation`, or `other`. This is CLI product feedback, not run evaluation feedback. Example shape only—do not submit unless actually encountered:
 
 ```bash
-langsmith feedback --category usability --format json "The trace list output made it hard to distinguish root runs from child runs."
+langsmith report --category usability --format json "The trace list output made it hard to distinguish root runs from child runs."
 ```
 
 Do not retry a failed or rate-limited feedback submission, switch credentials/endpoints to bypass a failure, or block the original task on feedback.
@@ -159,17 +159,17 @@ Two command groups with consistent behavior:
 
 ```
 langsmith
-├── trace (operations on trace trees - USE THIS FIRST)
+├── traces (operations on trace trees - USE THIS FIRST)
 │   ├── list    - List traces (filters apply to root run)
 │   ├── get     - Get single trace with full hierarchy
 │   └── export  - Export traces to JSONL files (one file per trace)
 │
-├── run (operations on individual runs - for specific analysis)
+├── runs (operations on individual runs - for specific analysis)
 │   ├── list    - List runs (flat, filters apply to any run)
 │   ├── get     - Get single run
 │   └── export  - Export runs to single JSONL file (flat)
 │
-├── dataset (dataset operations)
+├── datasets (dataset operations)
 │   ├── list    - List datasets
 │   ├── get     - Get dataset details
 │   ├── create  - Create empty dataset
@@ -177,25 +177,29 @@ langsmith
 │   ├── export  - Export dataset to file
 │   └── upload  - Upload local JSON as dataset
 │
-├── example (example operations)
+├── examples (example operations)
 │   ├── list    - List examples in a dataset
 │   ├── create  - Add example to a dataset
 │   └── delete  - Delete an example
 │
-├── evaluator (evaluator operations)
-│   ├── list    - List evaluators
-│   ├── upload  - Upload evaluator
-│   └── delete  - Delete evaluator
+├── evaluators (evaluator operations)
+│   ├── list       - List evaluators and where they are attached
+│   ├── get        - Get one evaluator and its rules
+│   ├── upload     - Upload a code evaluator
+│   ├── create-llm - Create an LLM-as-judge evaluator
+│   ├── delete     - Delete an evaluator by ID
+│   └── rule       - List, get, or delete the rules that attach evaluators
 │
-├── experiment (experiment operations)
+│
+├── experiments (experiment operations)
 │   ├── list    - List experiments
 │   └── get     - Get experiment results
 │
-├── thread (thread operations)
+├── threads (thread operations)
 │   ├── list    - List conversation threads
 │   └── get     - Get thread details
 │
-└── project (project operations)
+└── projects (project operations)
     └── list    - List tracing projects
 ```
 
@@ -214,30 +218,30 @@ Query traces using the `langsmith` CLI. Commands are language-agnostic.
 
 ```bash
 # List recent traces (most common operation)
-langsmith trace list --limit 10 --project my-project --api-key $LANGSMITH_API_KEY
+langsmith traces list --limit 10 --project my-project
 
 # List traces with metadata (timing, tokens, costs)
-langsmith trace list --limit 10 --include-metadata --api-key $LANGSMITH_API_KEY
+langsmith traces list --limit 10 --include-metadata
 
 # Filter traces by time
-langsmith trace list --last-n-minutes 60 --api-key $LANGSMITH_API_KEY
-langsmith trace list --since 2025-01-20T10:00:00Z --api-key $LANGSMITH_API_KEY
+langsmith traces list --last-n-minutes 60
+langsmith traces list --since 2025-01-20T10:00:00Z
 
 # Get specific trace with full hierarchy
-langsmith trace get <trace-id> --api-key $LANGSMITH_API_KEY
+langsmith traces get <trace-id>
 
 # List traces and show hierarchy inline
-langsmith trace list --limit 5 --show-hierarchy --api-key $LANGSMITH_API_KEY
+langsmith traces list --limit 5 --show-hierarchy
 
 # Export traces to JSONL (one file per trace, includes all runs)
-langsmith trace export ./traces --limit 20 --full --api-key $LANGSMITH_API_KEY
+langsmith traces export ./traces --limit 20 --full
 
 # Filter traces by performance
-langsmith trace list --min-latency 5.0 --limit 10 --api-key $LANGSMITH_API_KEY    # Slow traces (>= 5s)
-langsmith trace list --error --last-n-minutes 60 --api-key $LANGSMITH_API_KEY     # Failed traces
+langsmith traces list --min-latency 5.0 --limit 10    # Slow traces (>= 5s)
+langsmith traces list --error --last-n-minutes 60     # Failed traces
 
 # List specific run types (flat list)
-langsmith run list --run-type llm --limit 20 --api-key $LANGSMITH_API_KEY
+langsmith runs list --run-type llm --limit 20
 ```
 </querying_traces>
 
@@ -250,8 +254,8 @@ All commands support these filters (all AND together):
 - `--project NAME` - Project name
 - `--last-n-minutes N` - Time filter
 - `--since TIMESTAMP` - Time filter (ISO format)
-- `--error / --no-error` - Error status
-- `--name PATTERN` - Name contains (case-insensitive)
+- `--error` / `--no-error` - Error status
+- `--name NAME` - Run name (exact match)
 
 **Performance filters:**
 - `--min-latency SECONDS` - Minimum latency (e.g., `5` for >= 5s)
@@ -264,7 +268,7 @@ All commands support these filters (all AND together):
 
 ```bash
 # Filter traces by feedback score using raw LangSmith query
-langsmith trace list --filter 'and(eq(feedback_key, "correctness"), gte(feedback_score, 0.8))' --api-key $LANGSMITH_API_KEY
+langsmith traces list --filter 'and(eq(feedback_key, "correctness"), gte(feedback_score, 0.8))'
 ```
 </filters>
 
@@ -279,7 +283,7 @@ Use `--include-io` or `--full` to include inputs/outputs (required for dataset g
 
 <tips>
 - **Start with traces** — they provide complete context needed for trajectory and dataset generation
-- Use `trace export --full` for bulk data destined for datasets
+- Use `traces export --full` for bulk data destined for datasets
 - Always specify `--project` to avoid mixing data from different projects
 - Use `/tmp` for temporary exports
 - Include `--include-metadata` for performance/cost analysis

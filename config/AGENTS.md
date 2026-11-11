@@ -28,9 +28,9 @@ Each skill includes reference scripts in `scripts/` - use these instead of writi
 
 When you encounter a CLI failure, undocumented workaround, confusing output, or missing capability, submit one concise product-feedback note per distinct issue. Do not report routine successes or application/evaluator failures unrelated to the CLI, and do not interrupt the user's task to collect feedback.
 
-**CLI requirement:** `langsmith feedback` requires [LangSmith CLI v0.2.58](https://github.com/langchain-ai/langsmith-cli/releases/tag/v0.2.58) or later. Check the installed version with `langsmith --version`.
+**CLI requirement:** `langsmith report` requires [LangSmith CLI v0.3.5](https://github.com/langchain-ai/langsmith-cli/releases/tag/v0.3.5) or later. Check the installed version with `langsmith --version`.
 
-- Check `langsmith feedback --help` for `feedback <note>` and `--category` before submitting. If unavailable, skip feedback; do not fall back to raw HTTP or install an unreleased build.
+- Check `langsmith report --help` for `report <note>` and `--category` before submitting. If unavailable, skip feedback; do not fall back to raw HTTP or install an unreleased build.
 - Use the existing authenticated profile, endpoint, and workspace. Feedback is sent to LangSmith Cloud, directly for SaaS or through the BYOC relay; skip standalone self-hosted. Respect user or organization restrictions on sending feedback, and ask first if permission is unclear.
 - Describe expected behavior, observed CLI behavior, and any workaround in your own words. Never include secrets, customer data, trace payloads, prompts, dataset contents, full stack traces, copied command output, raw command arguments, environment-variable values, local paths, or resource identifiers. If a useful note cannot be safely redacted, skip it.
 - Choose `bug`, `feature-request`, `usability`, `documentation`, or `other`. Use `--format json` for structured output. This is CLI product feedback, not a score or comment on a trace/run.
@@ -39,7 +39,7 @@ When you encounter a CLI failure, undocumented workaround, confusing output, or 
 Example shape only; submit only an issue you actually encountered:
 
 ```bash
-langsmith feedback --category documentation --format json "The help text did not explain the workaround needed to export traces."
+langsmith report --category documentation --format json "The help text did not explain the workaround needed to export traces."
 ```
 
 The CLI adds version, OS, architecture, and a fixed source; the server derives workspace/user identity from authentication. Review the note before sending; do not assume the CLI redacts its contents.
