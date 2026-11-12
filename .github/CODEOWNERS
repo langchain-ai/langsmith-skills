@@ -8,7 +8,7 @@
 # Skills
 /config/skills/langsmith-trace/                     @xuro-langchain @lc-arjun
 /config/skills/langsmith-dataset/                   @xuro-langchain @lc-arjun
-/config/skills/langsmith-evaluator/                 @xuro-langchain @langchain-ai/evals
+/config/skills/langsmith-evaluator/                 @xuro-langchain @shamikkarkhanis
 /config/skills/langsmith-custom-apps/               @jacobkleiman-LC
 /config/skills/langsmith-experiment-diagnosis/      @jacobkleiman-LC
 /config/skills/langsmith-online-eval-engineering/   @jacobkleiman-LC
