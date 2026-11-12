@@ -68,22 +68,13 @@ graph = Graph([judge, checks, answer])
 
 ## Run it as an evaluator
 
-`graph.run(ctx)` reads `ctx.run`, `ctx.example` and so on as dicts, and returns each node's outputs keyed by node:
-
 ```python
-from types import SimpleNamespace
-
-
-def _as_dict(value):
-    return value if isinstance(value, dict) or value is None else value.model_dump()
-
-
-def graph_evaluator(run, example):
-    results = graph.run(SimpleNamespace(run=_as_dict(run), example=_as_dict(example)))
-    return {"key": "answer", "score": results[answer]["score"]}
+graph_evaluator = graph.as_evaluator(answer)
 ```
 
-Test it on a few real runs before attaching it anywhere: fetch them with `langsmith run get '<run-id>' --full --format json`, call `graph_evaluator` locally, and check each node's output. With tracing on, each node appears as its own span under the evaluator's run, so a wrong final score can be traced to the node that produced it.
+`as_evaluator(node)` returns a `(run, example)` evaluator that runs the graph and reports that node's `score` (and `comment`, if it returns one) under the node's name; `key="..."` renames it. A node with exactly one output reports that output instead. `run` and `example` can be LangSmith objects or dicts, and `example` is optional for online evaluators.
+
+Test it on a few real runs before attaching it anywhere: fetch them with `langsmith run get '<run-id>' --full --format json`, call `graph_evaluator(run)` locally, and check each node's output with `graph.run(run=run)`. With tracing on, each node appears as its own span under the evaluator's run, so a wrong final score can be traced to the node that produced it.
 
 Use `graph_evaluator` offline by passing it to `evaluate(..., evaluators=[graph_evaluator])` (see `langsmith-evaluator` for run functions and datasets).
 
