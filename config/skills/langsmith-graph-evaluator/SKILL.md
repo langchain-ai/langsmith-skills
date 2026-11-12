@@ -107,6 +107,6 @@ def evaluate(ctx):
     return {"score": results[answer]["score"]}
 ```
 
-- Give each `LLM` and `DecisionModel` a `description="..."`, and a code node a docstring, so LangSmith can label the nodes. Pass their arguments as literals or top-level constants, not computed values like f-strings.
+- Give each `LLM` and `DecisionModel` a `description="..."`, and a code node a docstring, so LangSmith can label the nodes. Write their arguments inline as literals (only `prompt` may name a top-level constant), not computed values like f-strings.
 
 Then attach the evaluator to a project or dataset in LangSmith. To change it later, `PATCH <LangSmith API URL>/v1/platform/evaluators/<id>` with `{"code_evaluator": {"code": "<the whole Python file>"}}`.
