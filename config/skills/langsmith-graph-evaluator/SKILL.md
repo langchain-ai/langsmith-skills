@@ -8,7 +8,7 @@ description: "Experimental. Build a LangSmith evaluator as a graph of steps with
 `openevals.graph` is experimental; its API may change between releases. Python only.
 
 ```bash
-pip install -U "openevals[typesafe]" langchain-anthropic   # or the provider your judges use
+pip install "openevals==0.2.5" langchain-anthropic   # or the provider your judges use; openevals[typesafe] for Jev
 ```
 
 Set the provider keys the graph calls (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `TYPESAFE_API_KEY` for Jev). Never write a key into the evaluator file.
@@ -89,7 +89,7 @@ Create it through the API rather than `langsmith evaluator upload`, which can't 
   "dependencies": "openevals[typesafe]==0.2.5\nlangchain-anthropic"}}
 ```
 
-- `dependencies` is one package per line: pin `openevals[typesafe]`, and add `langchain-<provider>` for each judge provider other than OpenAI.
+- `dependencies` is one package per line: pin `openevals==0.2.5` (`openevals[typesafe]==0.2.5` when the file has a `typesafe:` decision model, as in this example), and add `langchain-<provider>` for each judge provider other than OpenAI.
 - `workspace_secrets_keys` names the provider keys the file calls. LangSmith sends each workspace secret with the model calls, so the file never holds a key; the clients still need some key to start, so set a placeholder at the top of the file:
 
 ```python
