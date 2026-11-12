@@ -1,0 +1,24 @@
+# Code owners for langsmith-skills.
+# Later rules take precedence over earlier ones.
+# Owners were derived from commit history; update this file as ownership changes.
+
+# Fallback for anything not matched below (README, LICENSE, config/AGENTS.md, .claude-plugin, ...)
+*                                                   @xuro-langchain @jacobkleiman-LC
+
+# Skills
+/config/skills/langsmith-trace/                     @xuro-langchain @lc-arjun
+/config/skills/langsmith-dataset/                   @xuro-langchain @lc-arjun
+/config/skills/langsmith-evaluator/                 @xuro-langchain @langchain-ai/evals
+/config/skills/langsmith-custom-apps/               @jacobkleiman-LC
+/config/skills/langsmith-experiment-diagnosis/      @jacobkleiman-LC
+/config/skills/langsmith-online-eval-engineering/   @jacobkleiman-LC
+
+# Install script
+/install.sh                                         @xuro-langchain @mdrxy
+
+# CI, lint tooling and evals
+/.github/                                           @jacobkleiman-LC
+/scripts/                                           @jacobkleiman-LC
+/tests/                                             @jacobkleiman-LC
+/evals/                                             @jacobkleiman-LC
+/evals/uv.lock                                      @jacobkleiman-LC @jkennedyvz @vladislav-nechakhin
