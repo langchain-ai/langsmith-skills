@@ -86,7 +86,7 @@ Create it through the API rather than `langsmith evaluator upload`, which can't 
 {"name": "Answer quality", "type": "code", "code_evaluator": {
   "code": "<the whole Python file>", "language": "python", "advanced_features_enabled": true,
   "workspace_secrets_keys": ["ANTHROPIC_API_KEY", "TYPESAFE_API_KEY"],
-  "dependencies": "openevals[typesafe]==0.2.3\nlangchain-anthropic"}}
+  "dependencies": "openevals[typesafe]==0.2.4\nlangchain-anthropic"}}
 ```
 
 - `dependencies` is one package per line: pin `openevals[typesafe]`, and add `langchain-<provider>` for each judge provider other than OpenAI.
