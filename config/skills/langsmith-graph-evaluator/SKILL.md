@@ -22,8 +22,8 @@ Read the agent's code and a sample of its traces before writing nodes (see `lang
 Every node is a top-level name in the file, so LangSmith can read the graph from the source.
 
 - **Code:** a function decorated with `@node` that returns a dict. A parameter named `run`, `thread`, `trajectory` or `example` (or annotated `Run`, `Thread`, `Trajectory`, `Example`) gets that context. A parameter named after another node gets that node's outputs.
-- **LLM judge:** `LLM(model="<provider>:<model>", prompt=..., inputs={...}, output_schema=...)`. `prompt` is a string or a list of `(role, content)` messages with `{{name}}` placeholders. Without `output_schema` the node returns `{"score": number}`; `feedback_key` renames that key.
-- **Decision model:** `DecisionModel(model=..., inputs={...}, questions={...})` for yes/no, scale and choice judgements. `model` is required: `"typesafe:jev-latest"`, or any `langchain_core.decisions.BaseDecisionModel` instance. It takes no prompt; its inputs are the state it judges, so each question names the inputs it compares.
+- **LLM judge:** `LLM(model="<provider>:<model>", prompt=..., inputs={...}, output_schema=...)`. `prompt` is a string or a list of `(role, content)` messages with `{{name}}` placeholders. `output_schema` is a TypedDict or Pydantic class defined in the file, or a JSON schema; without one the node returns `{"score": number}`, and `feedback_key` renames that key.
+- **Decision model:** `DecisionModel(model=..., inputs={...}, questions={...})` for yes/no, scale and choice judgements. `model` is required: `"typesafe:jev-latest"`, or any `langchain_core.decisions.BaseDecisionModel` instance. It takes no prompt; its inputs are the state it judges, so each question names the inputs it compares. Each question key is an output of the node.
 
 Questions are `langchain_core.decisions` types, re-exported by `openevals.graph`, and take keyword arguments only:
 
@@ -78,4 +78,35 @@ Test it on a few real runs before attaching it anywhere: fetch them with `langsm
 
 Use `graph_evaluator` offline by passing it to `evaluate(..., evaluators=[graph_evaluator])` (see `langsmith-evaluator` for run functions and datasets).
 
-To attach it to a dataset or project, upload it with `langsmith evaluator upload` as described in `langsmith-evaluator`. An uploaded evaluator runs only with the packages LangSmith's evaluator runtime provides, so confirm `openevals` and each provider package are available there before uploading; if they are not, run the evaluator offline instead and tell the user.
+## Run it inside LangSmith
+
+Create it through the API rather than `langsmith evaluator upload`, which can't declare the packages a graph needs. `POST <LangSmith API URL>/v1/platform/evaluators` with the headers `x-api-key` and `X-Tenant-Id: <workspace id>`:
+
+```json
+{"name": "Answer quality", "type": "code", "code_evaluator": {
+  "code": "<the whole Python file>", "language": "python", "advanced_features_enabled": true,
+  "workspace_secrets_keys": ["ANTHROPIC_API_KEY", "TYPESAFE_API_KEY"],
+  "dependencies": "openevals[typesafe]==0.2.5\nlangchain-anthropic"}}
+```
+
+- `dependencies` is one package per line: pin `openevals[typesafe]`, and add `langchain-<provider>` for each judge provider other than OpenAI.
+- `workspace_secrets_keys` names the provider keys the file calls. LangSmith sends each workspace secret with the model calls, so the file never holds a key; the clients still need some key to start, so set a placeholder at the top of the file:
+
+```python
+import os
+
+for key in ("ANTHROPIC_API_KEY", "TYPESAFE_API_KEY"):
+    os.environ.setdefault(key, "set-by-langsmith")
+```
+
+- Define `evaluate(ctx)` and return exactly a `score` and optional `comment`, so the feedback is named after the evaluator:
+
+```python
+def evaluate(ctx):
+    results = graph.run(ctx)
+    return {"score": results[answer]["score"]}
+```
+
+- Give each `LLM` and `DecisionModel` a `description="..."`, and a code node a docstring, so LangSmith can label the nodes; add `display_name="..."` when a name doesn't read well as a label. Write their arguments inline as literals (only `prompt` may name a top-level constant, and `output_schema` a class in the file), not computed values like f-strings, and list every node in one `Graph([...])`.
+
+Then attach the evaluator to a project or dataset in LangSmith. To change it later, `PATCH <LangSmith API URL>/v1/platform/evaluators/<id>` with `{"code_evaluator": {"code": "<the whole Python file>"}}`.

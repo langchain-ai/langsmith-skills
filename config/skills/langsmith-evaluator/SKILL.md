@@ -358,7 +358,7 @@ The key is to capture the tool name at execution time, not at definition time.
 Evaluators uploaded to a dataset **automatically run** when you run experiments on that dataset. You do NOT need to pass them to `evaluate()` - just run your agent against the dataset and the uploaded evaluators execute automatically.
 
 **IMPORTANT - Local vs Uploaded:**
-Uploaded evaluators run in a sandboxed environment with very limited package access. Only use built-in/standard library imports, and place all imports **inside** the evaluator function body. For dataset (offline) evaluators, prefer running locally with `evaluate(evaluators=[...])` first — this gives you full package access.
+Evaluators uploaded with `langsmith evaluator upload` run in a sandboxed environment with very limited package access. Only use built-in/standard library imports, and place all imports **inside** the evaluator function body. Evaluators that need packages, such as graph evaluators, are created through the API with their dependencies (see `langsmith-graph-evaluator`). For dataset (offline) evaluators, prefer running locally with `evaluate(evaluators=[...])` first — this gives you full package access.
 
 **IMPORTANT - Code vs Structured Evaluators:**
 - **Code evaluators:** Upload with `langsmith evaluator upload`. They run in a limited environment without external packages and work well for deterministic logic.
