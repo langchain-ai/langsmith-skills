@@ -121,12 +121,13 @@ langsmith apps push --name <name> --workspace <target-ws-uuid>
 You cannot click the app, and a bug in its data layer renders as a plausible empty state rather than an error. This loop is the highest-value habit in this skill.
 
 1. **Keep aggregation pure.** Parsing and counting live in a module with no React and no `window.langsmith` (for example `src/lib/<domain>.ts`); the API module only fetches rows and hands them over.
-2. **Capture real rows** with the CLI into fixtures:
+2. **Capture real rows** with the CLI into fixtures. Pass the full `/api/v2/...` path: a bare `runs/query` resolves to the deprecated `/api/v1/runs/query`.
 
 ```bash
-langsmith api runs/query -X POST --workspace <ws-uuid> \
-  -F 'session[]=<project-uuid>' -F 'filter=eq(run_type, "tool")' \
-  -F 'select[]=id' -F 'select[]=trace_id' -F 'select[]=inputs' -F 'limit=100' \
+langsmith api /api/v2/runs/query -X POST --workspace <ws-uuid> \
+  -F 'project_ids[]=<project-uuid>' -F 'filter=eq(run_type, "tool")' \
+  -F 'min_start_time=<rfc3339>' -F 'page_size=100' \
+  -F 'selects[]=ID' -F 'selects[]=TRACE_ID' -F 'selects[]=INPUTS' \
   > /tmp/fixtures/tools.json
 ```
 

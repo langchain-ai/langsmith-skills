@@ -67,17 +67,29 @@ python chain_app/main.py
 python plain_app/main.py
 
 python - <<'PYEOF'
+import asyncio
 import os
 import time
 from pathlib import Path
 
 from langsmith import Client
 
+
+def query_runs(**params) -> list:
+    """`Client.runs` is async: collect its pages on a fresh client and loop."""
+
+    async def collect():
+        return [r async for r in Client().runs.query(**params)]
+
+    return asyncio.run(collect())
+
+
 project = os.environ["LANGSMITH_PROJECT"]
 client = Client()
 
 for _ in range(24):
-    roots = list(client.list_runs(project_name=project, is_root=True))
+    project_id = str(client.read_project(project_name=project).id)
+    roots = query_runs(project_ids=[project_id], is_root=True, selects=["ID", "NAME"])
     plain = next((r for r in roots if r.name == "rag_pipeline"), None)
     chain = next((r for r in roots if r.name != "rag_pipeline"), None)
     if plain and chain:

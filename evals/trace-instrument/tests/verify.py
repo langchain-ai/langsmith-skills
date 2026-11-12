@@ -14,6 +14,7 @@ Ingestion is asynchronous, and child runs land after their root, so each check
 polls until the structure it needs appears or a shared deadline expires.
 """
 
+import asyncio
 import json
 import os
 import re
@@ -22,6 +23,15 @@ import time
 from pathlib import Path
 
 from langsmith import Client
+
+
+def query_runs(**params) -> list:
+    """`Client.runs` is async: collect its pages on a fresh client and loop."""
+
+    async def collect():
+        return [r async for r in Client().runs.query(**params)]
+
+    return asyncio.run(collect())
 
 UUID_RE = re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
 WORKSPACE = Path("/workspace")
@@ -82,8 +92,8 @@ def poll(scorer: Scorer, fetch, ready) -> object:
 
 
 def split(runs: list) -> tuple[object | None, list]:
-    root = next((r for r in runs if r.parent_run_id is None), None)
-    return root, [r for r in runs if r.parent_run_id is not None]
+    root = next((r for r in runs if not r.parent_run_ids), None)
+    return root, [r for r in runs if r.parent_run_ids]
 
 
 def steps_below_root(runs: list) -> list:
@@ -163,10 +173,18 @@ def main() -> int:
             scorer.record(check, False, "skipped, trace IDs were not written")
         return scorer.write()
 
+    def project_runs(**params) -> list:
+        project_id = str(client.read_project(project_name=project).id)
+        return query_runs(
+            project_ids=[project_id],
+            selects=["ID", "NAME", "RUN_TYPE", "OUTPUTS", "PARENT_RUN_IDS"],
+            **params,
+        )
+
     wanted = {chain_id, plain_id}
     roots = poll(
         scorer,
-        lambda: {str(r.id) for r in client.list_runs(project_name=project, is_root=True)},
+        lambda: {str(r.id) for r in project_runs(is_root=True)},
         lambda seen: wanted <= seen,
     )
     scorer.stats["root_runs_in_project"] = len(roots)
@@ -179,7 +197,7 @@ def main() -> int:
     def runs_for(trace_id: str, ready) -> list:
         return poll(
             scorer,
-            lambda: list(client.list_runs(project_name=project, trace_id=trace_id)),
+            lambda: project_runs(trace_id=trace_id),
             ready,
         )
 
