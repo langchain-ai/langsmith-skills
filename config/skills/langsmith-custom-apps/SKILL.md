@@ -21,7 +21,7 @@ export LANGSMITH_ENDPOINT=<your-langsmith-endpoint>   # only for self-hosted
 export LANGSMITH_API_KEY=<workspace-api-key>
 ```
 
-Three authentication traps, each of which presents as something other than an auth problem:
+For agents, a workspace API key in `LANGSMITH_API_KEY` is the preferred way to authenticate (pass `--api-key` to override it for one command). Three authentication traps, each of which presents as something other than an auth problem:
 
 1. **`LANGSMITH_API_KEY` in the environment outranks the saved OAuth profile.** A stale exported key 403s every call while `langsmith auth info` still reports "authenticated". Run one-off commands as `env -u LANGSMITH_API_KEY -u LANGSMITH_WORKSPACE_ID langsmith …` when you mean to use the login.
 2. **`LANGSMITH_WORKSPACE_ID` may point at a different workspace than the key**, which surfaces as a confusing 403 rather than a wrong-workspace error. Unset it and pass `--workspace <uuid>` explicitly.
@@ -31,16 +31,16 @@ Three authentication traps, each of which presents as something other than an au
 <cli_feedback>
 After an actual CLI failure, undocumented workaround, confusing output, or missing capability, submit one concise product-feedback note per distinct issue in the task. Do not report routine successes or failures in the app's own code.
 
-**CLI requirement:** `langsmith feedback` requires [LangSmith CLI v0.2.58](https://github.com/langchain-ai/langsmith-cli/releases/tag/v0.2.58) or later. Check the installed version with `langsmith --version`.
+**CLI requirement:** `langsmith report` requires [LangSmith CLI v0.3.5](https://github.com/langchain-ai/langsmith-cli/releases/tag/v0.3.5) or later. Check the installed version with `langsmith --version`.
 
-Check `langsmith feedback --help` for `feedback <note>` and `--category`; if unavailable, skip feedback without raw HTTP or unreleased builds. Use the existing authenticated profile, endpoint, and workspace. Feedback goes to LangSmith Cloud, including through the BYOC relay; skip standalone self-hosted. Respect user/organization restrictions and ask first if permission to send feedback is unclear.
+Check `langsmith report --help` for `report <note>` and `--category`; if unavailable, skip feedback without raw HTTP or unreleased builds. Use the existing authenticated profile, endpoint, and workspace. Feedback goes to LangSmith Cloud, including through the BYOC relay; skip standalone self-hosted. Respect user/organization restrictions and ask first if permission to send feedback is unclear.
 
 Summarize expected versus observed CLI behavior and any workaround in your own words. Never send secrets, customer data, trace payloads, prompts, full stack traces, copied command output, raw arguments, environment-variable values, local paths, or resource identifiers. The CLI adds version/OS/architecture, but does not redact your note; skip it if it cannot be safely redacted.
 
 Choose `bug`, `feature-request`, `usability`, `documentation`, or `other`. This is CLI product feedback, not run evaluation feedback. Example shape only—do not submit unless actually encountered:
 
 ```bash
-langsmith feedback --category documentation --format json "The apps template flag rejected a value the documentation lists as valid."
+langsmith report --category documentation --format json "The apps template flag rejected a value the documentation lists as valid."
 ```
 
 Do not retry a failed or rate-limited feedback submission, switch credentials/endpoints to bypass a failure, or block the original task on feedback.
@@ -55,7 +55,7 @@ langsmith apps --help
 langsmith apps init --help    # the --template error message lists the real template set
 ```
 
-The gaps below were observed on **v0.2.42** and may be closed in your build. Each one is written as a fallback: apply it only when the help output confirms the command is missing or the flag is rejected.
+The gaps below were observed on **v0.2.42** and are closed in current releases. Each one is written as a fallback: apply it only when the help output confirms the command is missing or the flag is rejected.
 
 | If the docs say | And the CLI disagrees | Then |
 | --- | --- | --- |
@@ -66,9 +66,8 @@ The gaps below were observed on **v0.2.42** and may be closed in your build. Eac
 
 <lifecycle>
 ```bash
-mkdir my-app && cd my-app
 langsmith apps init --name my-app --template <listed-template> --workspace <ws-uuid>
-npm install
+cd my-app                                       # init creates it and installs dependencies
 export LANGSMITH_API_KEY=<workspace-api-key>   # see setup trap 3
 langsmith apps dev                              # live sandbox against LangSmith
 npm run build
@@ -81,12 +80,17 @@ langsmith apps push --name my-app --workspace <ws-uuid>
 </lifecycle>
 
 <pull_source>
-When the CLI has no `pull`, the platform API returns every file inline:
+Pull an app's source into a new directory named after the app:
 
 ```bash
-langsmith apps list --workspace <ws-uuid> --format json      # find the app id
-curl -s -H "X-API-Key: $LANGSMITH_API_KEY" \
-  "https://api.smith.langchain.com/v1/platform/custom-apps/<app-id>" \
+langsmith apps list --workspace <ws-uuid> --format json      # find the app id or name
+langsmith apps pull <app-id-or-name> --workspace <ws-uuid>
+```
+
+Apps pushed before source upload existed have no stored source, and older CLIs have no `pull`. In either case the platform API returns every file inline through `langsmith api`, which reuses the CLI's credentials and endpoint:
+
+```bash
+langsmith api /api/v1/platform/custom-apps/<app-id> --workspace <ws-uuid> \
   | python3 -c "
 import json, os, sys
 app = json.load(sys.stdin)
@@ -96,7 +100,7 @@ for path, content in app['files'].items():
 print(f\"wrote {len(app['files'])} files\")"
 ```
 
-The record also carries `name`, `entrypoint`, `current_version`, `scope`, `created_by`, `updated_by`, and `views_7d`. Use `GET /v1/platform/custom-apps` for the whole list.
+The record also carries `name`, `entrypoint`, `current_version`, `scope`, `created_by`, `updated_by`, and `views_7d`. Use `langsmith api /api/v1/platform/custom-apps` for the whole list.
 </pull_source>
 
 <replicate_across_workspaces>

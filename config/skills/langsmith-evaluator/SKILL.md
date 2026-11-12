@@ -11,24 +11,18 @@ Three core components: **(1) Creating Evaluators** - LLM-as-Judge, custom code; 
 Environment Variables
 
 ```bash
-LANGSMITH_API_KEY=your-api-key                        # Alternative to `langsmith auth login`
+LANGSMITH_API_KEY=your-api-key                        # REQUIRED for agents (preferred auth)
 LANGSMITH_ENDPOINT=https://api.smith.langchain.com   # SDK/CLI environment
 LANGSMITH_PROJECT=your-project-name                   # Default for trace/run queries only
 LANGSMITH_WORKSPACE_ID=your-workspace-id              # Optional: for org-scoped keys
 OPENAI_API_KEY=your-openai-key                        # For locally executed OpenAI judges
 ```
 
-Authenticate with a saved CLI profile (preferred):
-```bash
-langsmith auth login
-langsmith auth info
-```
-
-Alternatively, set `LANGSMITH_API_KEY`. The hidden `--api-key` flag remains available for compatibility, but do not place keys directly in commands or logs. Use `--profile` or `LANGSMITH_PROFILE` when selecting among saved profiles.
+Authentication for agents: set `LANGSMITH_API_KEY` (preferred), or pass `--api-key` on a single command. Do not paste key values into commands or logs; reference the environment variable instead. Interactive users can run `langsmith auth login` to save an OAuth profile instead; check what the CLI is using with `langsmith auth info`. Use `--profile` or `LANGSMITH_PROFILE` when selecting among saved profiles.
 
 **IMPORTANT:** `LANGSMITH_PROJECT` defaults trace and run queries; it does not choose an evaluator target. Evaluator creation and upload require an explicit `--dataset` or `--project`.
 
-**CLI and SDK authentication are separate:** A CLI OAuth profile authenticates `langsmith ...` commands only. Python and TypeScript SDKs do not automatically consume it. Before using an SDK during evaluator CRUD, confirm that `LANGSMITH_ENDPOINT`, `LANGSMITH_API_KEY`, and, when required, `LANGSMITH_WORKSPACE_ID` target the same environment and workspace as `langsmith auth info`. Stop if the CLI and SDK target different environments.
+**CLI and SDK authentication are separate:** A CLI OAuth profile (from `langsmith auth login`) authenticates `langsmith ...` commands only. Python and TypeScript SDKs do not automatically consume it. Before using an SDK during evaluator CRUD, confirm that `LANGSMITH_ENDPOINT`, `LANGSMITH_API_KEY`, and, when required, `LANGSMITH_WORKSPACE_ID` target the same environment and workspace as `langsmith auth info`. Stop if the CLI and SDK target different environments.
 
 Use a read-only SDK preflight before any SDK-assisted CRUD:
 
@@ -59,16 +53,16 @@ npm install langsmith openai
 <cli_feedback>
 After an actual CLI failure, undocumented workaround, confusing output, or missing capability, submit one concise product-feedback note per distinct issue in the task. Do not report routine successes or low evaluation scores/application failures unrelated to the CLI.
 
-**CLI requirement:** `langsmith feedback` requires [LangSmith CLI v0.2.58](https://github.com/langchain-ai/langsmith-cli/releases/tag/v0.2.58) or later. Check the installed version with `langsmith --version`.
+**CLI requirement:** `langsmith report` requires [LangSmith CLI v0.3.5](https://github.com/langchain-ai/langsmith-cli/releases/tag/v0.3.5) or later. Check the installed version with `langsmith --version`.
 
-Check `langsmith feedback --help` for `feedback <note>` and `--category`; if unavailable, skip feedback without raw HTTP or unreleased builds. Use the existing authenticated profile, endpoint, and workspace. Feedback goes to LangSmith Cloud, including through the BYOC relay; skip standalone self-hosted. Respect user/organization restrictions and ask first if permission to send feedback is unclear.
+Check `langsmith report --help` for `report <note>` and `--category`; if unavailable, skip feedback without raw HTTP or unreleased builds. Use the existing authenticated profile, endpoint, and workspace. Feedback goes to LangSmith Cloud, including through the BYOC relay; skip standalone self-hosted. Respect user/organization restrictions and ask first if permission to send feedback is unclear.
 
 Summarize expected versus observed CLI behavior and any workaround in your own words. Never send secrets, customer data, evaluator prompts, dataset contents, trace payloads, full stack traces, copied command output, raw arguments, environment-variable values, local paths, or resource identifiers. The CLI adds version/OS/architecture, but does not redact your note; skip it if it cannot be safely redacted.
 
 Choose `bug`, `feature-request`, `usability`, `documentation`, or `other`. This is CLI product feedback, not an evaluator score or comment. Example shape only—do not submit unless actually encountered:
 
 ```bash
-langsmith feedback --category feature-request --format json "Please support selecting a single evaluator by ID when display names collide."
+langsmith report --category feature-request --format json "Please support selecting a single evaluator by ID when display names collide."
 ```
 
 Do not retry a failed or rate-limited feedback submission, switch credentials/endpoints to bypass a failure, or block the original task on feedback.
@@ -121,7 +115,7 @@ Output structures vary significantly by framework, agent type, and configuration
 <llm_judge>
 ## LLM as Judge Evaluators
 
-Use `langsmith evaluator create-llm` to create a server-managed LLM-as-judge run rule. It requires `--model-config` plus exactly one target (`--dataset` or `--project`). Supply either `--prompt` and `--schema` JSON files or a Prompt Hub reference with `--hub-ref`.
+Use `langsmith evaluators create-llm` to create a server-managed LLM-as-judge run rule. It requires `--model-config` plus exactly one target (`--dataset` or `--project`). Supply either `--prompt` and `--schema` JSON files or a Prompt Hub reference with `--hub-ref`.
 
 ### Native CLI CRUD for LLM-as-Judge Run Rules
 
@@ -130,7 +124,7 @@ The native lifecycle below manages LLM-as-judge evaluators attached to a dataset
 **Create**
 
 ```bash
-langsmith evaluator create-llm \
+langsmith evaluators create-llm \
   --name "Accuracy Judge" \
   --dataset "My Dataset" \
   --prompt prompt.json \
@@ -144,29 +138,30 @@ Use `--project` instead of `--dataset` for an online evaluator. Use `--hub-ref o
 
 `--model-config` requires a server-supported serialized model configuration. Never invent `model.json` from a local LangChain model constructor. Obtain it from a known-working LangSmith evaluator, the LangSmith evaluator UI, or another documented source for the target environment. Confirm that the target server allows the serialized model class before creating or replacing the evaluator.
 
-`langsmith evaluator get` does not export the complete serialized model configuration. If creation fails with `Deserialization ... is not allowed`, the model configuration contains a class prohibited by the server allowlist. Do not retry with guessed serialized objects; obtain a supported configuration or ask the environment administrator.
+`langsmith evaluators get` does not export the complete serialized model configuration. If creation fails with `Deserialization ... is not allowed`, the model configuration contains a class prohibited by the server allowlist. Do not retry with guessed serialized objects; obtain a supported configuration or ask the environment administrator.
 
 **Read**
 
 ```bash
-# List all attached evaluator rules
-langsmith evaluator list --format json
+# List evaluators and the projects or datasets each one is attached to
+langsmith evaluators list --format json
 
-# Get every rule with this exact display name
-langsmith evaluator get "Accuracy Judge"
+# Get one evaluator by name or ID, with the rules that attach it
+langsmith evaluators get "Accuracy Judge" --format json
 
-# Narrow project rules with a project session ID
-langsmith evaluator get "Accuracy Judge" --session-id <project-session-id>
+# List the rules on one project or dataset
+langsmith evaluators rule list --project "Production Agent" --format json
+langsmith evaluators rule list --dataset "My Dataset" --format json
 ```
 
-`get` is display-name based and may return multiple rules. It reports rule metadata and selected LLM fields, but does not export a complete inline prompt, schema, and model configuration.
+An evaluator is the shared scorer; a rule attaches it to one project or dataset. `get` reports the evaluator's prompt or code and its rules, but does not export a complete serialized model configuration.
 
 **Update / Replace**
 
 There is no separate `update` subcommand. Re-run `create-llm` with the same name and target plus `--replace`; the CLI prompts before PATCHing the matching rule. Supply the complete desired LLM configuration again.
 
 ```bash
-langsmith evaluator create-llm \
+langsmith evaluators create-llm \
   --name "Accuracy Judge" \
   --dataset "My Dataset" \
   --prompt prompt-v2.json \
@@ -178,12 +173,16 @@ langsmith evaluator create-llm \
 **Delete**
 
 ```bash
-# Inspect every match before deleting
-langsmith evaluator get "Accuracy Judge"
-langsmith evaluator delete "Accuracy Judge"
+# Detach the evaluator from one dataset or project (the evaluator is kept)
+langsmith evaluators rule list --dataset "My Dataset"
+langsmith evaluators rule delete "Accuracy Judge" --dataset "My Dataset"
+
+# Delete the evaluator itself everywhere; takes an ID, not a name
+langsmith evaluators get "Accuracy Judge" --format json
+langsmith evaluators delete <evaluator-id> --delete-rules
 ```
 
-`delete` is name-based and deletes **all workspace run rules with that display name**, even across different datasets or projects. If more than one rule matches and only one should be removed, stop rather than using the native delete command; exact ID-targeted deletion is not exposed by `langsmith evaluator` yet.
+Prefer `rule delete` to remove an evaluator from one target. `evaluators delete` affects every project and dataset the evaluator is attached to, and only deletes an evaluator that still has rules when `--delete-rules` is set.
 
 For rapid local development or judges that require local packages, define a local evaluator and pass it to `evaluate(evaluators=[...])` instead.
 
@@ -361,8 +360,8 @@ Evaluators uploaded to a dataset **automatically run** when you run experiments 
 Evaluators uploaded with `langsmith evaluator upload` run in a sandboxed environment with very limited package access. Only use built-in/standard library imports, and place all imports **inside** the evaluator function body. Evaluators that need packages, such as graph evaluators, are created through the API with their dependencies (see `langsmith-graph-evaluator`). For dataset (offline) evaluators, prefer running locally with `evaluate(evaluators=[...])` first — this gives you full package access.
 
 **IMPORTANT - Code vs Structured Evaluators:**
-- **Code evaluators:** Upload with `langsmith evaluator upload`. They run in a limited environment without external packages and work well for deterministic logic.
-- **Structured evaluators (LLM-as-Judge):** Create with `langsmith evaluator create-llm` using a model config and either prompt/schema files or `--hub-ref`.
+- **Code evaluators:** Upload with `langsmith evaluators upload`. They run in a limited environment without external packages and work well for deterministic logic.
+- **Structured evaluators (LLM-as-Judge):** Create with `langsmith evaluators create-llm` using a model config and either prompt/schema files or `--hub-ref`.
 
 **IMPORTANT - Choose the right target:**
 - `--dataset`: Offline evaluator with `(run, example)` signature - for comparing to expected values
@@ -371,44 +370,44 @@ Evaluators uploaded with `langsmith evaluator upload` run in a sandboxed environ
 You must specify one. Global evaluators are not supported.
 
 ```bash
-# List all attached evaluator rules
-langsmith evaluator list
+# List evaluators and where each one is attached
+langsmith evaluators list
 
-# Inspect matching rules by display name
-langsmith evaluator get "Trajectory Match"
+# Inspect one evaluator and its rules by name or ID
+langsmith evaluators get "Trajectory Match"
 
-# Inspect project rules by session ID (not project name)
-langsmith evaluator get --session-id <project-session-id>
+# List the rules on a project (by name, or --project-id <uuid>)
+langsmith evaluators rule list --project "Production Agent"
 
 # Upload offline evaluator (attached to dataset)
-langsmith evaluator upload \
+langsmith evaluators upload \
   --name "Trajectory Match" \
   --function trajectory_evaluator \
   --dataset "My Dataset" \
   my_evaluators.py
 
 # Upload online evaluator (attached to project)
-langsmith evaluator upload \
+langsmith evaluators upload \
   --name "Quality Check" \
   --function quality_check \
   --project "Production Agent" \
   my_evaluators.py
 
 # Replace an existing rule with the same name and target (prompts first)
-langsmith evaluator upload \
+langsmith evaluators upload \
   --name "Trajectory Match" \
   --function trajectory_evaluator \
   --dataset "My Dataset" \
   --replace \
   my_evaluators.py
 
-# Delete by display name (prompts first)
-langsmith evaluator delete "Trajectory Match"
+# Detach from one target (prompts first; the evaluator is kept)
+langsmith evaluators rule delete "Trajectory Match" --dataset "My Dataset"
 ```
 
 **IMPORTANT - Safety Prompts:**
 - `upload --replace` and `create-llm --replace` patch the matching rule and prompt first
-- `delete NAME` deletes **every rule in the workspace with that display name**, potentially across multiple targets; run `get NAME` first and inspect all matches
+- `rule delete NAME --dataset/--project` detaches one rule and must match exactly one; `evaluators delete <evaluator-id>` removes the evaluator from every target, so run `get` first and inspect its rules
 - **NEVER use `--yes` flag unless the user explicitly requests it**
 
 ### CRUD Verification

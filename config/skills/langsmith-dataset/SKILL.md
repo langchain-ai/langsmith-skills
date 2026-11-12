@@ -16,9 +16,9 @@ LANGSMITH_PROJECT=your-project-name                   # Check this to know which
 LANGSMITH_WORKSPACE_ID=your-workspace-id              # Optional: for org-scoped keys
 ```
 
-Authentication is REQUIRED: either set the `LANGSMITH_API_KEY` environment variable, or pass the `--api-key` flag to CLI commands (preferred):
+Authentication is REQUIRED. For agents, set the `LANGSMITH_API_KEY` environment variable (preferred); every `langsmith` command reads it automatically. To pass a key for a single command, use `--api-key`:
 ```bash
-langsmith dataset list --api-key $LANGSMITH_API_KEY
+langsmith datasets list --api-key "$LANGSMITH_API_KEY"
 ```
 
 **IMPORTANT:** Always check the environment variables or `.env` file for `LANGSMITH_PROJECT` before querying or interacting with LangSmith. This tells you which project contains the relevant traces and data. If the LangSmith project is not available, use your best judgement to identify the right one.
@@ -43,16 +43,16 @@ curl -sSL https://raw.githubusercontent.com/langchain-ai/langsmith-cli/main/scri
 <cli_feedback>
 After an actual CLI failure, undocumented workaround, confusing output, or missing capability, submit one concise product-feedback note per distinct issue in the task. Do not report routine successes or dataset quality problems unrelated to the CLI.
 
-**CLI requirement:** `langsmith feedback` requires [LangSmith CLI v0.2.58](https://github.com/langchain-ai/langsmith-cli/releases/tag/v0.2.58) or later. Check the installed version with `langsmith --version`.
+**CLI requirement:** `langsmith report` requires [LangSmith CLI v0.3.5](https://github.com/langchain-ai/langsmith-cli/releases/tag/v0.3.5) or later. Check the installed version with `langsmith --version`.
 
-Check `langsmith feedback --help` for `feedback <note>` and `--category`; if unavailable, skip feedback without raw HTTP or unreleased builds. Use the existing authenticated profile, endpoint, and workspace. Feedback goes to LangSmith Cloud, including through the BYOC relay; skip standalone self-hosted. Respect user/organization restrictions and ask first if permission to send feedback is unclear.
+Check `langsmith report --help` for `report <note>` and `--category`; if unavailable, skip feedback without raw HTTP or unreleased builds. Use the existing authenticated profile, endpoint, and workspace. Feedback goes to LangSmith Cloud, including through the BYOC relay; skip standalone self-hosted. Respect user/organization restrictions and ask first if permission to send feedback is unclear.
 
 Summarize expected versus observed CLI behavior and any workaround in your own words. Never send secrets, customer data, dataset contents, trace payloads, prompts, full stack traces, copied command output, raw arguments, environment-variable values, local paths, or resource identifiers. The CLI adds version/OS/architecture, but does not redact your note; skip it if it cannot be safely redacted.
 
 Choose `bug`, `feature-request`, `usability`, `documentation`, or `other`. This is CLI product feedback, not dataset/run evaluation feedback. Example shape only—do not submit unless actually encountered:
 
 ```bash
-langsmith feedback --category documentation --format json "The dataset upload help did not explain the required JSON structure."
+langsmith report --category documentation --format json "The dataset upload help did not explain the required JSON structure."
 ```
 
 Do not retry a failed or rate-limited feedback submission, switch credentials/endpoints to bypass a failure, or block the original task on feedback.
@@ -63,23 +63,23 @@ Use the `langsmith` CLI to manage datasets and examples.
 
 ### Dataset Commands
 
-- `langsmith dataset list` - List datasets in LangSmith
-- `langsmith dataset get <name-or-id>` - View dataset details
-- `langsmith dataset create --name <name>` - Create a new empty dataset
-- `langsmith dataset delete <name-or-id>` - Delete a dataset
-- `langsmith dataset export <name-or-id> <output-file>` - Export dataset to local JSON file
-- `langsmith dataset upload <file> --name <name>` - Upload a local JSON file as a dataset
+- `langsmith datasets list` - List datasets in LangSmith
+- `langsmith datasets get <name-or-id>` - View dataset details
+- `langsmith datasets create --name <name>` - Create a new empty dataset
+- `langsmith datasets delete <name-or-id>` - Delete a dataset
+- `langsmith datasets export <name-or-id> <output-file>` - Export dataset to local JSON file
+- `langsmith datasets upload <file> --name <name>` - Upload a local JSON file as a dataset
 
 ### Example Commands
 
-- `langsmith example list --dataset <name>` - List examples in a dataset
-- `langsmith example create --dataset <name> --inputs <json>` - Add an example to a dataset
-- `langsmith example delete <example-id>` - Delete an example
+- `langsmith examples list --dataset <name>` - List examples in a dataset
+- `langsmith examples create --dataset <name> --inputs <json>` - Add an example to a dataset
+- `langsmith examples delete <example-id>` - Delete an example
 
 ### Experiment Commands
 
-- `langsmith experiment list --dataset <name>` - List experiments for a dataset
-- `langsmith experiment get <name>` - View experiment results
+- `langsmith experiments list --dataset <name>` - List experiments for a dataset
+- `langsmith experiments get <name>` - View experiment results
 
 ### Common Flags
 
@@ -112,7 +112,7 @@ Export traces first, then process them into dataset format using code:
 
 ```bash
 # 1. Export traces to JSONL files
-langsmith trace export ./traces --project my-project --limit 20 --full --api-key $LANGSMITH_API_KEY
+langsmith traces export ./traces --project my-project --limit 20 --full
 ```
 
 <python>
@@ -171,7 +171,7 @@ writeFileSync("/tmp/dataset.json", JSON.stringify(examples, null, 2));
 
 ```bash
 # Upload local JSON file as a dataset
-langsmith dataset upload /tmp/dataset.json --name "My Evaluation Dataset" --api-key $LANGSMITH_API_KEY
+langsmith datasets upload /tmp/dataset.json --name "My Evaluation Dataset"
 ```
 
 ### Using the SDK Directly
@@ -255,34 +255,34 @@ await client.createExamples([
 
 ```bash
 # List all datasets
-langsmith dataset list --api-key $LANGSMITH_API_KEY
+langsmith datasets list
 
 # Get dataset details
-langsmith dataset get "My Dataset" --api-key $LANGSMITH_API_KEY
+langsmith datasets get "My Dataset"
 
 # Create an empty dataset
-langsmith dataset create --name "New Dataset" --description "For evaluation" --api-key $LANGSMITH_API_KEY
+langsmith datasets create --name "New Dataset" --description "For evaluation"
 
 # Upload a local JSON file
-langsmith dataset upload /tmp/dataset.json --name "My Dataset" --api-key $LANGSMITH_API_KEY
+langsmith datasets upload /tmp/dataset.json --name "My Dataset"
 
 # Export a dataset to local file
-langsmith dataset export "My Dataset" /tmp/exported.json --limit 100 --api-key $LANGSMITH_API_KEY
+langsmith datasets export "My Dataset" /tmp/exported.json --limit 100
 
 # Delete a dataset
-langsmith dataset delete "My Dataset" --api-key $LANGSMITH_API_KEY
+langsmith datasets delete "My Dataset"
 
 # List examples in a dataset
-langsmith example list --dataset "My Dataset" --limit 10 --api-key $LANGSMITH_API_KEY
+langsmith examples list --dataset "My Dataset" --limit 10
 
 # Add an example
-langsmith example create --dataset "My Dataset" \
+langsmith examples create --dataset "My Dataset" \
   --inputs '{"query": "test"}' \
-  --outputs '{"answer": "result"}' --api-key $LANGSMITH_API_KEY
+  --outputs '{"answer": "result"}'
 
 # List experiments
-langsmith experiment list --dataset "My Dataset" --api-key $LANGSMITH_API_KEY
-langsmith experiment get "eval-v1" --api-key $LANGSMITH_API_KEY
+langsmith experiments list --dataset "My Dataset"
+langsmith experiments get "eval-v1"
 ```
 </script_usage>
 
@@ -291,22 +291,22 @@ Complete workflow from traces to uploaded LangSmith dataset:
 
 ```bash
 # 1. Export traces from LangSmith
-langsmith trace export ./traces --project my-project --limit 20 --full --api-key $LANGSMITH_API_KEY
+langsmith traces export ./traces --project my-project --limit 20 --full
 
 # 2. Process traces into dataset format (using Python/JS code)
 # See "Creating Datasets" section above
 
 # 3. Upload to LangSmith
-langsmith dataset upload /tmp/final_response.json --name "Skills: Final Response" --api-key $LANGSMITH_API_KEY
-langsmith dataset upload /tmp/trajectory.json --name "Skills: Trajectory" --api-key $LANGSMITH_API_KEY
+langsmith datasets upload /tmp/final_response.json --name "Skills: Final Response"
+langsmith datasets upload /tmp/trajectory.json --name "Skills: Trajectory"
 
 # 4. Verify upload
-langsmith dataset list --api-key $LANGSMITH_API_KEY
-langsmith dataset get "Skills: Final Response" --api-key $LANGSMITH_API_KEY
-langsmith example list --dataset "Skills: Final Response" --limit 3 --api-key $LANGSMITH_API_KEY
+langsmith datasets list
+langsmith datasets get "Skills: Final Response"
+langsmith examples list --dataset "Skills: Final Response" --limit 3
 
 # 5. Run experiments
-langsmith experiment list --dataset "Skills: Final Response" --api-key $LANGSMITH_API_KEY
+langsmith experiments list --dataset "Skills: Final Response"
 ```
 </example_workflow>
 
@@ -314,18 +314,18 @@ langsmith experiment list --dataset "Skills: Final Response" --api-key $LANGSMIT
 **Dataset upload fails:**
 - Verify LANGSMITH_API_KEY is set
 - Check JSON file is valid: each element needs `inputs` (and optionally `outputs`)
-- Dataset name must be unique, or delete existing first with `langsmith dataset delete`
+- Dataset name must be unique, or delete existing first with `langsmith datasets delete`
 
 **Empty dataset after upload:**
 - Verify JSON file contains an array of objects with `inputs` key
-- Check file isn't empty: `langsmith example list --dataset "Name"`
+- Check file isn't empty: `langsmith examples list --dataset "Name"`
 
 **Export has no data:**
 - Ensure traces were exported with `--full` flag to include inputs/outputs
 - Verify traces have both `inputs` and `outputs` populated
 
 **Example count mismatch:**
-- Use `langsmith dataset get "Name"` to check remote count
+- Use `langsmith datasets get "Name"` to check remote count
 - Compare with local file to verify upload completeness
 </troubleshooting>
 </output>
