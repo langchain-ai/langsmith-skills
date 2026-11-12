@@ -78,4 +78,35 @@ Test it on a few real runs before attaching it anywhere: fetch them with `langsm
 
 Use `graph_evaluator` offline by passing it to `evaluate(..., evaluators=[graph_evaluator])` (see `langsmith-evaluator` for run functions and datasets).
 
-To attach it to a dataset or project, upload it with `langsmith evaluator upload` as described in `langsmith-evaluator`. An uploaded evaluator runs only with the packages LangSmith's evaluator runtime provides, so confirm `openevals` and each provider package are available there before uploading; if they are not, run the evaluator offline instead and tell the user.
+## Run it inside LangSmith
+
+Create it through the API rather than `langsmith evaluator upload`, which can't declare the packages a graph needs. `POST <LangSmith API URL>/v1/platform/evaluators` with the headers `x-api-key` and `X-Tenant-Id: <workspace id>`:
+
+```json
+{"name": "Answer quality", "type": "code", "code_evaluator": {
+  "code": "<the whole Python file>", "language": "python", "advanced_features_enabled": true,
+  "workspace_secrets_keys": ["ANTHROPIC_API_KEY", "TYPESAFE_API_KEY"],
+  "dependencies": "openevals[typesafe]==0.2.3\nlangchain-anthropic"}}
+```
+
+- `dependencies` is one package per line: pin `openevals[typesafe]`, and add `langchain-<provider>` for each judge provider other than OpenAI.
+- `workspace_secrets_keys` names the provider keys the file calls. LangSmith sends each workspace secret with the model calls, so the file never holds a key; the clients still need some key to start, so set a placeholder at the top of the file:
+
+```python
+import os
+
+for key in ("ANTHROPIC_API_KEY", "TYPESAFE_API_KEY"):
+    os.environ.setdefault(key, "set-by-langsmith")
+```
+
+- Define `evaluate(ctx)` and return exactly a `score` and optional `comment`, so the feedback is named after the evaluator:
+
+```python
+def evaluate(ctx):
+    results = graph.run(ctx)
+    return {"score": results[answer]["score"]}
+```
+
+- Give each `LLM` and `DecisionModel` a `description="..."`, and a code node a docstring, so LangSmith can label the nodes. Pass their arguments as literals or top-level constants, not computed values like f-strings.
+
+Then attach the evaluator to a project or dataset in LangSmith. To change it later, `PATCH <LangSmith API URL>/v1/platform/evaluators/<id>` with `{"code_evaluator": {"code": "<the whole Python file>"}}`.
