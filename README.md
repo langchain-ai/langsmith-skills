@@ -110,3 +110,14 @@ Agent configuration lives in `config/`. To update an existing installation:
 ```bash
 ./install.sh --force
 ```
+
+### Checking skill CLI commands
+
+Skills should only reference commands that exist in the released CLI. `scripts/check_cli_commands.py` extracts every `langsmith ...` command from `config/` (shell code blocks and inline code) and checks the command path and each flag against `langsmith <command> --help`. Unknown commands, singular aliases such as `langsmith trace` (use `traces`), and flags that `--help` does not list, including hidden ones, fail the check. `--api-key` is the one allowed hidden flag. Positional arguments are not checked.
+
+```bash
+uv run --no-project scripts/check_cli_commands.py            # all of config/
+uv run --no-project scripts/check_cli_commands.py path/to/SKILL.md
+```
+
+It uses the `langsmith` on your `PATH` (override with `LANGSMITH_BIN`). The `skills-cli-check` workflow runs it against the latest CLI release on every pull request and weekly.
