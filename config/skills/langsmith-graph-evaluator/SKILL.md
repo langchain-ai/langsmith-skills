@@ -109,4 +109,31 @@ def evaluate(ctx):
 
 - Give each `LLM` and `DecisionModel` a `description="..."`, and a code node a docstring, so LangSmith can label the nodes; add `display_name="..."` when a name doesn't read well as a label. Write their arguments inline as literals (only `prompt` may name a top-level constant, and `output_schema` a class in the file), not computed values like f-strings, and list every node in one `Graph([...])`.
 
+### Runs or threads
+
+An evaluator scores either single runs or whole threads (conversations), fixed when it's created. Choose from what the user wants to measure, and ask if it's unclear.
+
+- **Runs** (the default): leave out `code_evaluator_input`. Nodes read `Run` / `run` as above.
+- **Threads:** add `"code_evaluator_input": "thread"` to `code_evaluator`. A code node's `thread` parameter gets `thread_id`, `session_id` and `runs`, the thread's root runs in order, each with its `inputs` and `outputs`. Build what a judge needs in a code node:
+
+```python
+@node
+def transcript(thread):
+    """Joins the thread's turns in order."""
+    turns = [f"User: {r.inputs.question}\nAssistant: {r.outputs.answer}" for r in thread.runs]
+    return {"text": "\n\n".join(turns)}
+
+
+RESOLVED_PROMPT = "Did the assistant resolve the user's request by the end? Score 0 to 1.\n\n{{conversation}}"
+
+resolved = LLM(
+    model="anthropic:claude-sonnet-5",
+    prompt=RESOLVED_PROMPT,
+    inputs={"conversation": transcript.text},
+    description="Judges whether the conversation ended with the request resolved",
+)
+```
+
+A thread evaluator can only be attached to threads, and a run evaluator only to runs.
+
 Then attach the evaluator to a project or dataset in LangSmith. To change it later, `PATCH <LangSmith API URL>/v1/platform/evaluators/<id>` with `{"code_evaluator": {"code": "<the whole Python file>"}}`.
