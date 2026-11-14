@@ -1,6 +1,27 @@
 # LangSmith Skills
 
-> **⚠️** — This project is in early development. APIs and skill content may change.
+> [!IMPORTANT]
+> **This repository is deprecated.** The LangSmith skills have moved to
+> [langchain-ai/langchain-skills](https://github.com/langchain-ai/langchain-skills),
+> which ships them with the LangChain, LangGraph and Deep Agents skills in one
+> plugin. This repository no longer receives updates and will be archived.
+>
+> To switch, install the new plugin and remove this one:
+>
+> ```bash
+> /plugin marketplace add langchain-ai/langchain-skills
+> /plugin install langchain-skills@langchain-skills
+> /plugin uninstall langsmith-skills@langsmith-skills
+> ```
+>
+> Or with `npx skills`: `npx skills add langchain-ai/langchain-skills --skill '*' --yes`,
+> then delete the old `langsmith-*` skill folders.
+>
+> | Old skill | New skill |
+> |------|-------------|
+> | `langsmith-trace` | `langchain-agent-tracing` |
+> | `langsmith-online-eval-engineering` | `langchain-agent-monitoring` |
+> | `langsmith-dataset`, `langsmith-evaluator`, `langsmith-graph-evaluator`, `langsmith-experiment-diagnosis` | `langchain-agent-experiments` |
 
 Agent skills for observing and evaluating LLM applications with [LangSmith](https://smith.langchain.com/). Query traces, build evaluation datasets, and create custom evaluators — all from your coding agent.
 
