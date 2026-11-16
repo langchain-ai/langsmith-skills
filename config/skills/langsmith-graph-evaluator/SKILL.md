@@ -15,7 +15,11 @@ Set the provider keys the graph calls (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `T
 
 ## Decide what to measure first
 
-Read the agent's code and a sample of its traces before writing nodes (see `langsmith-trace`). Confirm the exact fields in `run.inputs`, `run.outputs` and the dataset's `example.outputs`. Make a node only for a meaningful step; keep small helpers as plain functions. One node is fine.
+Start by reading the agent code in the user's repo and a sample of its recent traces in LangSmith (see `langsmith-trace`). Reuse any code location and tracing project or trace link already supplied in the conversation, selected target, or local project configuration. If the code location is missing, ask for its repository path or entry point. If the tracing context is missing, ask for a development (Dev) tracing project or representative trace link. Do not assume the project is named `Dev` or require a separate Dev project when a tracing target is already supplied.
+
+Before writing the evaluator, ask the user what they want to measure and whether to score each run or whole threads. Include requests for any missing code or tracing context in the same question, and wait for their answer before writing the evaluator.
+
+For runs, confirm the exact fields in `run.inputs` and `run.outputs`. For threads, choose the input representation needed for the evaluation: raw `thread`, `all_messages`, `human_ai_pairs`, or `first_human_last_ai`. Inspect representative data in that format. For raw `thread`, confirm the fields needed within each root run's `inputs` and `outputs` in `thread.runs`. If using a dataset, also confirm its `example.outputs`. Make a node only for a meaningful step; keep small helpers as plain functions. One node is fine.
 
 ## Nodes
 
@@ -108,5 +112,34 @@ def evaluate(ctx):
 ```
 
 - Give each `LLM` and `DecisionModel` a `description="..."`, and a code node a docstring, so LangSmith can label the nodes; add `display_name="..."` when a name doesn't read well as a label. Write their arguments inline as literals (only `prompt` may name a top-level constant, and `output_schema` a class in the file), not computed values like f-strings, and list every node in one `Graph([...])`.
+
+### Runs or threads
+
+An evaluator scores either single runs or whole threads (conversations), fixed when it's created. Choose from what the user wants to measure, and ask if it's unclear.
+
+- **Runs** (the default): leave out `code_evaluator_input`. Nodes read `Run` / `run` as above.
+- **Threads:** set `code_evaluator_input` in `code_evaluator` to `thread`, `all_messages`, `human_ai_pairs`, or `first_human_last_ai`. Only the selected representation is populated. For the three folded formats, read the selected string through a code node's `ctx` parameter (for example, `ctx.all_messages`).
+
+For raw `thread`, a code node's `thread` parameter gets `thread_id`, `session_id` and `runs`, the thread's root runs in order, each with its `inputs` and `outputs`. Build what a judge needs in a code node:
+
+```python
+@node
+def transcript(thread):
+    """Joins the thread's turns in order."""
+    turns = [f"User: {r.inputs.question}\nAssistant: {r.outputs.answer}" for r in thread.runs]
+    return {"text": "\n\n".join(turns)}
+
+
+RESOLVED_PROMPT = "Did the assistant resolve the user's request by the end? Score 0 to 1.\n\n{{conversation}}"
+
+resolved = LLM(
+    model="anthropic:claude-sonnet-5",
+    prompt=RESOLVED_PROMPT,
+    inputs={"conversation": transcript.text},
+    description="Judges whether the conversation ended with the request resolved",
+)
+```
+
+A thread evaluator can only be attached to threads, and a run evaluator only to runs.
 
 Then attach the evaluator to a project or dataset in LangSmith. To change it later, `PATCH <LangSmith API URL>/v1/platform/evaluators/<id>` with `{"code_evaluator": {"code": "<the whole Python file>"}}`.
