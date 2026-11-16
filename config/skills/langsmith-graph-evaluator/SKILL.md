@@ -17,7 +17,7 @@ Set the provider keys the graph calls (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `T
 
 Start by reading the agent code in the user's repo and a sample of its recent traces in LangSmith (see `langsmith-trace`). Before writing the evaluator, ask the user what they want to measure and whether to score each run or whole threads. Wait for their answer before writing the evaluator.
 
-Confirm the exact fields in `run.inputs`, `run.outputs` and the dataset's `example.outputs`. Make a node only for a meaningful step; keep small helpers as plain functions. One node is fine.
+For runs, confirm the exact fields in `run.inputs` and `run.outputs`. For threads, inspect the ordered root runs in `thread.runs` and confirm the `inputs` and `outputs` fields needed from each turn. If using a dataset, also confirm its `example.outputs`. Make a node only for a meaningful step; keep small helpers as plain functions. One node is fine.
 
 ## Nodes
 
