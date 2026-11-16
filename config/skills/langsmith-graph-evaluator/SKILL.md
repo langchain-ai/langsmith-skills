@@ -17,7 +17,7 @@ Set the provider keys the graph calls (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `T
 
 Start by reading the agent code in the user's repo and a sample of its recent traces in LangSmith (see `langsmith-trace`). Before writing the evaluator, ask the user what they want to measure and whether to score each run or whole threads. Wait for their answer before writing the evaluator.
 
-For runs, confirm the exact fields in `run.inputs` and `run.outputs`. For threads, inspect the ordered root runs in `thread.runs` and confirm the `inputs` and `outputs` fields needed from each turn. If using a dataset, also confirm its `example.outputs`. Make a node only for a meaningful step; keep small helpers as plain functions. One node is fine.
+For runs, confirm the exact fields in `run.inputs` and `run.outputs`. For threads, choose the input representation needed for the evaluation: raw `thread`, `all_messages`, `human_ai_pairs`, or `first_human_last_ai`. Inspect representative data in that format. For raw `thread`, confirm the fields needed within each root run's `inputs` and `outputs` in `thread.runs`. If using a dataset, also confirm its `example.outputs`. Make a node only for a meaningful step; keep small helpers as plain functions. One node is fine.
 
 ## Nodes
 
@@ -116,7 +116,9 @@ def evaluate(ctx):
 An evaluator scores either single runs or whole threads (conversations), fixed when it's created. Choose from what the user wants to measure, and ask if it's unclear.
 
 - **Runs** (the default): leave out `code_evaluator_input`. Nodes read `Run` / `run` as above.
-- **Threads:** add `"code_evaluator_input": "thread"` to `code_evaluator`. A code node's `thread` parameter gets `thread_id`, `session_id` and `runs`, the thread's root runs in order, each with its `inputs` and `outputs`. Build what a judge needs in a code node:
+- **Threads:** set `code_evaluator_input` in `code_evaluator` to `thread`, `all_messages`, `human_ai_pairs`, or `first_human_last_ai`. Only the selected representation is populated. For the three folded formats, read the selected string through a code node's `ctx` parameter (for example, `ctx.all_messages`).
+
+For raw `thread`, a code node's `thread` parameter gets `thread_id`, `session_id` and `runs`, the thread's root runs in order, each with its `inputs` and `outputs`. Build what a judge needs in a code node:
 
 ```python
 @node
