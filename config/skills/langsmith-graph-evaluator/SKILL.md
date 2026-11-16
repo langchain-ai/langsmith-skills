@@ -15,7 +15,9 @@ Set the provider keys the graph calls (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `T
 
 ## Decide what to measure first
 
-Start by reading the agent code in the user's repo and a sample of its recent traces in LangSmith (see `langsmith-trace`). Before writing the evaluator, ask the user what they want to measure and whether to score each run or whole threads. Wait for their answer before writing the evaluator.
+Start by reading the agent code in the user's repo and a sample of its recent traces in LangSmith (see `langsmith-trace`). Reuse any code location and tracing project or trace link already supplied in the conversation, selected target, or local project configuration. If the code location is missing, ask for its repository path or entry point. If the tracing context is missing, ask for a development (Dev) tracing project or representative trace link. Do not assume the project is named `Dev` or require a separate Dev project when a tracing target is already supplied.
+
+Before writing the evaluator, ask the user what they want to measure and whether to score each run or whole threads. Include requests for any missing code or tracing context in the same question, and wait for their answer before writing the evaluator.
 
 For runs, confirm the exact fields in `run.inputs` and `run.outputs`. For threads, choose the input representation needed for the evaluation: raw `thread`, `all_messages`, `human_ai_pairs`, or `first_human_last_ai`. Inspect representative data in that format. For raw `thread`, confirm the fields needed within each root run's `inputs` and `outputs` in `thread.runs`. If using a dataset, also confirm its `example.outputs`. Make a node only for a meaningful step; keep small helpers as plain functions. One node is fine.
 
