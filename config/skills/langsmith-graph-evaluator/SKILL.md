@@ -69,9 +69,9 @@ Pick the cheapest node type that can make each judgement:
 2. **Decision model** for yes/no, scale and choice judgements. Cheaper and faster than an LLM judge, with calibrated probabilities. Choose by the size of the state each question reads:
    - **Under 32K tokens** (and the whole request under 64K): Jev, `model="typesafe:jev-latest"`.
    - **Over 32K tokens:** Jev with the long-context header (up to 262K tokens; slower and somewhat less accurate), or OpenAI Decisions. First consider trimming the state in a code node, for example to the final answer and the sources it cites.
-3. **LLM judge** when the judgement needs reasoning: multi-step checks, math, comparing code against a request, or a written rationale. Use a reasoning model from whichever provider the user has keys for, such as `openai:gpt-5.5` or `anthropic:claude-opus-5`; within a family, pick the stronger reasoning model (Opus over Sonnet).
+3. **LLM judge** when the judgement needs reasoning: multi-step checks, math, comparing code against a request, or a written rationale. Use a reasoning model from whichever provider the user has keys for, such as `openai:gpt-5.5` or `anthropic:claude-opus-5` (Opus over Sonnet), but not a top-tier model like `claude-fable-5-1`: an evaluator runs on every run it scores, so pick the cheapest model that reasons well enough.
 
-If the user cares most about cost, build on decision models and code, and keep LLM judges to the nodes that need reasoning.
+Optimize for cost throughout. If the user cares most about cost, build on decision models and code, and keep LLM judges to the nodes that need reasoning.
 
 Jev with the long-context header:
 
