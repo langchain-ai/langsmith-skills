@@ -84,13 +84,26 @@ Use `graph_evaluator` offline by passing it to `evaluate(..., evaluators=[graph_
 
 ## Run it inside LangSmith
 
-Create it through the API rather than `langsmith evaluator upload`, which can't declare the packages a graph needs. `POST <LangSmith API URL>/v1/platform/evaluators` with the headers `x-api-key` and `X-Tenant-Id: <workspace id>`:
+Create it with the LangSmith Python SDK (`pip install "langsmith>=0.15.0"`) rather than `langsmith evaluator upload`, which can't declare the packages a graph needs. The `Langsmith` client reads `LANGSMITH_API_KEY`; pass the workspace ID as `tenant_id`, and `base_url` for a non-US or self-hosted LangSmith (the API host, without `/api`):
 
-```json
-{"name": "Answer quality", "type": "code", "code_evaluator": {
-  "code": "<the whole Python file>", "language": "python", "advanced_features_enabled": true,
-  "workspace_secrets_keys": ["ANTHROPIC_API_KEY", "TYPESAFE_API_KEY"],
-  "dependencies": "openevals[typesafe]==0.2.5\nlangchain-anthropic"}}
+```python
+from pathlib import Path
+
+from langsmith import Langsmith
+
+client = Langsmith(tenant_id="<workspace id>")
+created = client.online_evaluators.create(
+    name="Answer quality",
+    type="code",
+    code_evaluator={
+        "code": Path("answer_quality.py").read_text(),
+        "language": "python",
+        "advanced_features_enabled": True,
+        "workspace_secrets_keys": ["ANTHROPIC_API_KEY", "TYPESAFE_API_KEY"],
+        "dependencies": "openevals[typesafe]==0.2.5\nlangchain-anthropic",
+    },
+)
+evaluator_id = created.evaluator.id
 ```
 
 - `dependencies` is one package per line: pin `openevals==0.2.5` (`openevals[typesafe]==0.2.5` when the file has a `typesafe:` decision model, as in this example), and add `langchain-<provider>` for each judge provider other than OpenAI.
@@ -118,7 +131,7 @@ def evaluate(ctx):
 An evaluator scores either single runs or whole threads (conversations), fixed when it's created. Choose from what the user wants to measure, and ask if it's unclear.
 
 - **Runs** (the default): leave out `code_evaluator_input`. Nodes read `Run` / `run` as above.
-- **Threads:** set `code_evaluator_input` in `code_evaluator` to `thread`, `all_messages`, `human_ai_pairs`, or `first_human_last_ai`. Only the selected representation is populated. For the three folded formats, read the selected string through a code node's `ctx` parameter (for example, `ctx.all_messages`).
+- **Threads:** set `code_evaluator_input` in the `code_evaluator` you pass to `client.online_evaluators.create` to `thread`, `all_messages`, `human_ai_pairs`, or `first_human_last_ai`. Only the selected representation is populated. For the three folded formats, read the selected string through a code node's `ctx` parameter (for example, `ctx.all_messages`).
 
 For raw `thread`, a code node's `thread` parameter gets `thread_id`, `session_id` and `runs`, the thread's root runs in order, each with its `inputs` and `outputs`. Build what a judge needs in a code node:
 
@@ -142,4 +155,4 @@ resolved = LLM(
 
 A thread evaluator can only be attached to threads, and a run evaluator only to runs.
 
-Then attach the evaluator to a project or dataset in LangSmith. To change it later, `PATCH <LangSmith API URL>/v1/platform/evaluators/<id>` with `{"code_evaluator": {"code": "<the whole Python file>"}}`.
+Then attach the evaluator to a project or dataset in LangSmith. To change it later, `client.online_evaluators.update(evaluator_id, code_evaluator={"code": Path("answer_quality.py").read_text()})`.
