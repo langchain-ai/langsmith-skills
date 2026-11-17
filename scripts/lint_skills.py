@@ -30,6 +30,7 @@ ALLOWED_MODELS = {
     "claude-fable-5-1",
     "claude-haiku-4-5-20251001",
     "gpt-5.5",
+    "gpt-6-luna",
 }
 
 MODEL_PATTERN = re.compile(
