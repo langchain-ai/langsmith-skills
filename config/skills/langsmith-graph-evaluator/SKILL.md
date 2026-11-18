@@ -28,7 +28,10 @@ Read the agent code in the user's repo and a sample of its recent traces in Lang
 - **Code:** its repository path or entry point.
 - **Traces:** the agent and environment, or a representative trace link.
 
-From the traces, note the fields the evaluator could read and roughly how large they are (about 4 characters per token); input size decides the model (see Choose models).
+From the traces, note the fields the evaluator could read and how many tokens they hold; input size decides the model (see Choose models):
+
+- **The whole conversation** (a transcript, `all_messages`, or a trajectory): use the largest `prompt_tokens` among the trace's `llm` runs, from `token_usage` with `--include-metadata`. Don't use the root run's count: it adds up every model call in the trace, so it overstates the size.
+- **Narrower fields** (a final answer, retrieved sources): estimate from their length, about 4 characters per token.
 
 ## Decide what to measure
 
@@ -46,7 +49,7 @@ If the user has said what to measure, use it. If not, suggest a starting evaluat
 | Sales / marketing automation | Lead research, outreach, CRM updates | Task completion |
 | Other | Anything else | Hallucination |
 
-- **User satisfaction / frustration:** a decision model reads the conversation and scores how frustrated the user is (`Score`) and whether they ended satisfied (`Noul`). Add code around it when needed, such as building a transcript from the thread's turns. Usually scores threads.
+- **User satisfaction / frustration:** a decision model reads the conversation and scores how frustrated the user is (`Score`, with levels such as "Calm, just stating facts", "Frustrated but civil", and "Very angry, strong language or threatening to leave") and whether they ended satisfied (`Noul`). Usually scores threads or trajectories. Use code when needed, such as trimming the conversation to fit the decision model's input size.
 - **Hallucination:** whether every factual claim in the output is supported by the sources the agent had: retrieved documents, tool outputs, query results. A code node gathers those sources from the run; a decision model checks the output against them.
 - **Task completion:** whether the agent did what was asked. A decision model by default; an LLM judge with a reasoning model when completion means checking several steps or tool results.
 - **Code correctness:** code checks first (the generated code parses; test, lint, or build tool calls in the trace succeeded), then an LLM judge with a reasoning model on whether the change does what was asked. A failed code check scores 0.
@@ -189,8 +192,12 @@ frustration = DecisionModel(
     inputs={"conversation": transcript.text},
     questions={
         "frustration": Score(
-            instructions="How frustrated is the user by the end of the conversation?",
-            criteria=["Not frustrated", "Mildly frustrated", "Very frustrated"],
+            instructions="How frustrated is the user?",
+            criteria=[
+                "Calm, just stating facts",
+                "Frustrated but civil",
+                "Very angry, strong language or threatening to leave",
+            ],
         ),
         "satisfied": Noul(instructions="Did the user end the conversation satisfied?"),
     },
