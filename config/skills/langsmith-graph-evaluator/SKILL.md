@@ -1,6 +1,6 @@
 ---
 name: langsmith-graph-evaluator
-description: "Experimental. Build a LangSmith evaluator as a graph of steps with openevals.graph: code checks, LLM judges and decision models wired together, each traced as its own span and drawn as a graph in LangSmith. Use when an evaluator needs several chained checks, or the user asks for a graph, multi-step or composed evaluator. For a single judge or code check, use langsmith-evaluator."
+description: "Experimental. Build a LangSmith evaluator as a graph of steps with openevals.graph: code checks, LLM judges, and decision models wired together, each traced as its own span and drawn as a graph in LangSmith. Use when an evaluator needs several chained checks, or the user asks for a graph, multi-step, or composed evaluator. For a single judge or code check, use langsmith-evaluator."
 ---
 
 # Build a graph evaluator
@@ -10,8 +10,8 @@ description: "Experimental. Build a LangSmith evaluator as a graph of steps with
 Use this workflow:
 
 1. [Gather context](#gather-context): the agent's code and recent traces.
-2. [Decide what to measure](#decide-what-to-measure): use the user's goal, or suggest one from the agent's type, and confirm it.
-3. [Choose models](#choose-models): code, a decision model or an LLM judge for each node.
+2. [Decide what to measure](#decide-what-to-measure): use the user's goal, or suggest one from the agent's type and confirm it.
+3. [Choose models](#choose-models): code, a decision model, or an LLM judge for each node.
 4. [Write the graph](#write-the-graph): one Python file.
 5. [Test it locally](#test-it-locally) on real runs.
 6. [Run it inside LangSmith](#run-it-inside-langsmith).
@@ -23,7 +23,7 @@ The agent or dataset decides the kind of evaluator:
 - **Agent and environment** (or a tracing project): an online evaluator on that project's runs. The environment's `project_id` is its tracing project.
 - **Dataset:** an offline evaluator on experiments over that dataset.
 
-Read the agent code in the user's repo and a sample of its recent traces in LangSmith (see `langsmith-trace`), or, for a dataset, its examples and recent experiment runs. Reuse any agent, environment, tracing project, dataset, trace link or code location already supplied in the conversation, the selected agent or dataset, or local project configuration. Do not assume the project is named `Dev` or require a separate Dev project when a tracing project or trace link is already supplied. Note what is still missing:
+Read the agent code in the user's repo and a sample of its recent traces in LangSmith (see `langsmith-trace`), or, for a dataset, its examples and recent experiment runs. Reuse any agent, environment, tracing project, dataset, trace link, or code location already supplied in the conversation, the selected agent or dataset, or local project configuration. Do not assume the project is named `Dev` or require a separate Dev project when a tracing project or trace link is already supplied. Note what is still missing:
 
 - **Code:** its repository path or entry point.
 - **Traces:** a development (Dev) tracing project or a representative trace link.
@@ -32,7 +32,7 @@ From the traces, note the fields the evaluator could read and roughly how large 
 
 ## Decide what to measure
 
-Agree on two things before writing the evaluator: **what to measure**, and whether to score **each run or whole threads** (conversations).
+Agree on two things before writing the evaluator: **what to measure** and whether to score **each run or whole threads** (conversations).
 
 If the user has said what to measure, use it. If not, suggest a starting evaluator instead of only asking. Classify the agent from its code (system prompt, tools, entry point) and traces or dataset examples (what users ask, what it returns), then suggest the default for that type:
 
@@ -49,7 +49,7 @@ If the user has said what to measure, use it. If not, suggest a starting evaluat
 - **User satisfaction / frustration:** a decision model reads the conversation and scores how frustrated the user is (`Score`) and whether they ended satisfied (`Noul`). Add code around it when needed, such as building a transcript from the thread's turns. Usually scores threads.
 - **Hallucination:** whether every factual claim in the output is supported by the sources the agent had: retrieved documents, tool outputs, query results. A code node gathers those sources from the run; a decision model checks the output against them.
 - **Task completion:** whether the agent did what was asked. A decision model by default; an LLM judge with a reasoning model when completion means checking several steps or tool results.
-- **Code correctness:** code checks first (the generated code parses; test, lint or build tool calls in the trace succeeded), then an LLM judge with a reasoning model on whether the change does what was asked. A failed code check scores 0.
+- **Code correctness:** code checks first (the generated code parses; test, lint, or build tool calls in the trace succeeded), then an LLM judge with a reasoning model on whether the change does what was asked. A failed code check scores 0.
 
 Add a second evaluator only for a failure the traces clearly show, such as repeated tool errors.
 
@@ -58,7 +58,7 @@ Ask one question that includes the suggestion and why it fits (the agent type an
 Then pin down the data:
 
 - **Runs:** confirm the exact fields in `run.inputs` and `run.outputs`.
-- **Threads:** choose the input representation: raw `thread`, `all_messages`, `human_ai_pairs`, or `first_human_last_ai`, and inspect representative data in that format. For raw `thread`, confirm the fields needed in each root run's `inputs` and `outputs` in `thread.runs`.
+- **Threads:** choose the input representation (raw `thread`, `all_messages`, `human_ai_pairs`, or `first_human_last_ai`) and inspect representative data in that format. For raw `thread`, confirm the fields needed in each root run's `inputs` and `outputs` in `thread.runs`.
 - **Dataset:** also confirm its `example.outputs`.
 
 ## Choose models
@@ -66,12 +66,12 @@ Then pin down the data:
 Pick the cheapest node type that can make each judgement:
 
 1. **Code** for anything deterministic: parsing, matching, counting, tool-call checks.
-2. **Decision model** for yes/no, scale and choice judgements. Cheaper and faster than an LLM judge, with calibrated probabilities. Choose by the size of the state each question reads:
+2. **Decision model** for yes/no, scale, and choice judgements. Cheaper and faster than an LLM judge, with calibrated probabilities. Choose by the size of the state each question reads:
    - **Under 32K tokens** (and the whole request under 64K): Jev, `model="typesafe:jev-latest"`.
-   - **Over 32K tokens:** Jev with the long-context header (up to 262K tokens; slower and somewhat less accurate), or OpenAI Decisions. First consider trimming the state in a code node, for example to the final answer and the sources it cites.
+   - **Over 32K tokens:** Jev with the long-context header (up to 262K tokens; slower and somewhat less accurate) or OpenAI Decisions. First consider trimming the state in a code node, for example to the final answer and the sources it cites.
 3. **LLM judge** when the judgement needs reasoning: multi-step checks, math, comparing code against a request, or a written rationale. Use a reasoning model from whichever provider the user has keys for, such as `openai:gpt-5.5` or `anthropic:claude-opus-5` (Opus over Sonnet), but not a top-tier model like `claude-fable-5-1`: an evaluator runs on every run it scores, so pick the cheapest model that reasons well enough.
 
-Optimize for cost throughout. If the user cares most about cost, build on decision models and code, and keep LLM judges to the nodes that need reasoning.
+Optimize for cost throughout. If the user cares most about cost, build on decision models and code. Keep LLM judges to the nodes that need reasoning.
 
 Jev with the long-context header:
 
@@ -104,9 +104,9 @@ Set the provider keys the graph calls (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `T
 
 Make a node only for a meaningful step; keep small helpers as plain functions. One node is fine. Every node is a top-level name in the file, so LangSmith can read the graph from the source.
 
-- **Code:** a function decorated with `@node` that returns a dict. A parameter named `run`, `thread`, `trajectory` or `example` (or annotated `Run`, `Thread`, `Trajectory`, `Example`) gets that context. A parameter named after another node gets that node's outputs.
+- **Code:** a function decorated with `@node` that returns a dict. A parameter named `run`, `thread`, `trajectory`, or `example` (or annotated `Run`, `Thread`, `Trajectory`, or `Example`) gets that context. A parameter named after another node gets that node's outputs.
 - **LLM judge:** `LLM(model="<provider>:<model>", prompt=..., inputs={...}, output_schema=...)`. `prompt` is a string or a list of `(role, content)` messages with `{{name}}` placeholders. `output_schema` is a TypedDict or Pydantic class defined in the file, or a JSON schema; without one the node returns `{"score": number}`, and `feedback_key` renames that key.
-- **Decision model:** `DecisionModel(model=..., inputs={...}, questions={...})`. `model` is required: `"typesafe:jev-latest"`, or any `langchain_core.decisions.BaseDecisionModel` instance (see Choose models). It takes no prompt; its inputs are the state it judges, so each question names the inputs it compares. Each question key is an output of the node.
+- **Decision model:** `DecisionModel(model=..., inputs={...}, questions={...})`. `model` is required: `"typesafe:jev-latest"` or any `langchain_core.decisions.BaseDecisionModel` instance (see Choose models). It takes no prompt; its inputs are the state it judges, so each question names the inputs it compares. Each question key is an output of the node.
 
 Questions are `langchain_core.decisions` types, re-exported by `openevals.graph`, and take keyword arguments only:
 
@@ -174,7 +174,7 @@ def evaluate(ctx):
 
 ### Threads
 
-To score whole threads, read the thread instead of `Run`. For the folded formats (`all_messages`, `human_ai_pairs`, `first_human_last_ai`), read the selected string through a code node's `ctx` parameter (for example, `ctx.all_messages`). For raw `thread`, a code node's `thread` parameter gets `thread_id`, `session_id` and `runs`, the thread's root runs in order, each with its `inputs` and `outputs`. Build what a judge needs in a code node:
+To score whole threads, read the thread instead of `Run`. For the folded formats (`all_messages`, `human_ai_pairs`, `first_human_last_ai`), read the selected string through a code node's `ctx` parameter (for example, `ctx.all_messages`). For raw `thread`, a code node's `thread` parameter gets `thread_id`, `session_id`, and `runs`, the thread's root runs in order, each with its `inputs` and `outputs`. Build what a judge needs in a code node:
 
 ```python
 @node
