@@ -206,13 +206,13 @@ graph_evaluator = graph.as_evaluator(answer)
 
 `as_evaluator(node)` returns a `(run, example)` evaluator that runs the graph and reports that node's `score` (and `comment`, if it returns one) under the node's name; `key="..."` renames it. A node with exactly one output reports that output instead. `run` and `example` can be LangSmith objects or dicts, and `example` is optional for online evaluators.
 
-Test it on a few real runs before attaching it anywhere: fetch them with `langsmith run get '<run-id>' --full --format json`, call `graph_evaluator(run)` locally, and check each node's output with `graph.run(run=run)`. With tracing on, the whole graph is traced as a single evaluator trace that includes each node's output, so a wrong final score can be traced to the node that produced it.
+Test it on a few real runs before attaching it anywhere: fetch them with `langsmith runs get '<run-id>' --full --format json`, call `graph_evaluator(run)` locally, and check each node's output with `graph.run(run=run)`. With tracing on, the whole graph is traced as a single evaluator trace that includes each node's output, so a wrong final score can be traced to the node that produced it.
 
 Use `graph_evaluator` offline by passing it to `evaluate(..., evaluators=[graph_evaluator])` (see `langsmith-evaluator` for run functions and datasets).
 
 ## Run it inside LangSmith
 
-Create it through the API rather than `langsmith evaluator upload`, which can't declare the packages a graph needs. `POST <LangSmith API URL>/v1/platform/evaluators` with the headers `x-api-key` and `X-Tenant-Id: <workspace id>`:
+Create it through the API rather than `langsmith evaluators upload`, which can't declare the packages a graph needs. `POST <LangSmith API URL>/v1/platform/evaluators` with the headers `x-api-key` and `X-Tenant-Id: <workspace id>`:
 
 ```json
 {"name": "Answer quality", "type": "code", "code_evaluator": {

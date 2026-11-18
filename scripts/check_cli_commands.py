@@ -48,7 +48,7 @@ FENCE = re.compile(r"^\s*```([A-Za-z0-9_+-]*)")
 INLINE_CODE = re.compile(r"`([^`\n]+)`")
 SHELL_OPERATOR = re.compile(r"^[|&;()<>]+$")
 # "  -p, --project string   description" or "      --full   description"
-FLAG_LINE = re.compile(r"^\s+(?:-(\w), )?--([\w-]+)(?: (\S+))?(?:\s{2,}|\s*$)")
+FLAG_LINE = re.compile(r"^\s+(?:-(\w), )?--([\w-]+)(?:\[=[^\]]*\])?(?: (\S+))?(?:\s{2,}|\s*$)")
 
 
 @dataclass
