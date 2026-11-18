@@ -85,6 +85,7 @@ Jev with the long-context header:
 ```python
 import httpx2
 from langchain_typesafe import TypeSafeClassifier
+from openevals.graph import DecisionModel, Noul, Trajectory
 
 grounded = DecisionModel(
     model=TypeSafeClassifier(
@@ -102,10 +103,10 @@ For OpenAI Decisions, pass `model=OpenAIClassifier(model="gpt-6-luna")` instead 
 ## Write the graph
 
 ```bash
-pip install "openevals==0.2.5"   # openevals[typesafe] for Jev; add langchain-<provider> for judges other than OpenAI
+pip install "openevals==0.2.5"   # openevals[typesafe] for Jev; langchain-openai>=1.8.1 for OpenAI Decisions; langchain-<provider> for judges other than OpenAI
 ```
 
-Set the provider keys the graph calls (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `TYPESAFE_API_KEY` for Jev).
+Set the provider keys the graph calls (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `TYPESAFE_API_KEY` for Jev). Never write a key into the evaluator file.
 
 ### Nodes
 
@@ -223,13 +224,26 @@ Use `graph_evaluator` offline by passing it to `evaluate(..., evaluators=[graph_
 
 ## Run it inside LangSmith
 
-Create it through the API rather than `langsmith evaluators upload`, which can't declare the packages a graph needs. `POST <LangSmith API URL>/v1/platform/evaluators` with the headers `x-api-key` and `X-Tenant-Id: <workspace id>`:
+Create it with the LangSmith Python SDK (`pip install "langsmith>=0.15.0"`) rather than raw API calls or `langsmith evaluators upload`, which can't declare the packages a graph needs. The `Langsmith` client reads `LANGSMITH_API_KEY`; pass the workspace ID as `tenant_id`, and `base_url` for a non-US or self-hosted LangSmith (the API host, without `/api`):
 
-```json
-{"name": "Answer quality", "type": "code", "code_evaluator": {
-  "code": "<the whole Python file>", "language": "python", "advanced_features_enabled": true,
-  "workspace_secrets_keys": ["ANTHROPIC_API_KEY", "TYPESAFE_API_KEY"],
-  "dependencies": "openevals[typesafe]==0.2.5\nlangchain-anthropic"}}
+```python
+from pathlib import Path
+
+from langsmith import Langsmith
+
+client = Langsmith(tenant_id="<workspace id>")
+created = client.online_evaluators.create(
+    name="Answer quality",
+    type="code",
+    code_evaluator={
+        "code": Path("answer_quality.py").read_text(),
+        "language": "python",
+        "advanced_features_enabled": True,
+        "workspace_secrets_keys": ["ANTHROPIC_API_KEY", "TYPESAFE_API_KEY"],
+        "dependencies": "openevals[typesafe]==0.2.5\nlangchain-anthropic",
+    },
+)
+evaluator_id = created.evaluator.id
 ```
 
 - `dependencies` is one package per line: pin `openevals==0.2.5` (`openevals[typesafe]==0.2.5` when the file has a Jev decision model, as in this example), add `langchain-<provider>` for each judge provider other than OpenAI, and `langchain-openai>=1.8.1` for OpenAI Decisions.
@@ -237,7 +251,7 @@ Create it through the API rather than `langsmith evaluators upload`, which can't
 - **Runs** (the default): leave out `code_evaluator_input`.
 - **Threads:** set `code_evaluator_input` in `code_evaluator` to `thread`, `trajectory`, `all_messages`, `human_ai_pairs`, or `first_human_last_ai`. Only the selected representation is populated. A thread evaluator can only be attached to threads, and a run evaluator only to runs.
 
-Then attach the evaluator to the tracing project (online) or dataset (offline). To change it later, `PATCH <LangSmith API URL>/v1/platform/evaluators/<id>` with `{"code_evaluator": {"code": "<the whole Python file>"}}`.
+Then attach the evaluator to the tracing project (online) or dataset (offline). To change it later, run `client.online_evaluators.update(evaluator_id, code_evaluator={"code": Path("answer_quality.py").read_text()})`.
 
 ## Examples
 
