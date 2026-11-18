@@ -132,7 +132,7 @@ Choice(instructions="Tone", criteria={"calm": None, "rude": None})   # chosen la
 - Write `LLM` and `DecisionModel` arguments as literal values, not computed ones like f-strings. The exceptions: `prompt` can name a string or list defined at the top of the file, `output_schema` can name a class defined in the file, and `model` can be a decision model instance (see Choose models).
 - List every node in one `Graph([...])`.
 - Define `evaluate(ctx)` and return exactly a `score` and optional `comment`, so the feedback is named after the evaluator.
-- LangSmith sends each workspace secret with the model calls, so the file never holds a key; the clients still need some key to start, so set a placeholder at the top of the file.
+- LangSmith's sandbox proxy adds each selected workspace secret as a header on requests to that secret's allowed hosts, so the key never enters the sandbox or the file. The provider clients still need a key to start, so set a placeholder at the top of the file. `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, and `TYPESAFE_API_KEY` have default hosts; other providers need an admin to configure allowed hosts first.
 
 ### Example
 
