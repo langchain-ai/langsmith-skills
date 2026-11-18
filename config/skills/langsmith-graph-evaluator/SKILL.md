@@ -50,7 +50,7 @@ If the user has said what to measure, use it. If not, suggest a starting evaluat
 | Other | Anything else | Hallucination |
 
 - **User satisfaction / frustration:** a decision model reads the conversation and scores how frustrated the user is (`Score`, with levels such as "Calm, just stating facts", "Frustrated but civil", and "Very angry, strong language or threatening to leave") and whether they ended satisfied (`Noul`). Usually scores threads or trajectories. Use code when needed, such as trimming the conversation to fit the decision model's input size.
-- **Hallucination:** whether every factual claim in the output is supported by the sources the agent had: retrieved documents, tool outputs, query results. A code node gathers those sources from the run; a decision model checks the output against them.
+- **Hallucination:** whether every factual claim in the output is supported by the sources the agent had: retrieved documents, tool outputs, and query results. Usually scores trajectories, whose messages include those tool results. Pass the trajectory to a decision model, sized by input tokens (see Choose models), or to an LLM judge when checking claims takes reasoning, such as numbers or calculations. Use code only to trim the trajectory to fit the model.
 - **Task completion:** whether the agent did what was asked. A decision model by default; an LLM judge with a reasoning model when completion means checking several steps or tool results.
 - **Code correctness:** code checks first (the generated code parses; test, lint, or build tool calls in the trace succeeded), then an LLM judge with a reasoning model on whether the change does what was asked. A failed code check scores 0.
 
@@ -71,7 +71,7 @@ Pick the cheapest node type that can make each judgement:
 1. **Code** for anything deterministic: parsing, matching, counting, tool-call checks.
 2. **Decision model** for yes/no, scale, and choice judgements. Cheaper and faster than an LLM judge, with calibrated probabilities. Choose by the size of the state each question reads:
    - **Under 32K tokens** (and the whole request under 64K): Jev, `model="typesafe:jev-latest"`.
-   - **Over 32K tokens:** Jev with the long-context header (up to 262K tokens; slower and somewhat less accurate) or OpenAI Decisions. First consider trimming the state in a code node, for example to the final answer and the sources it cites.
+   - **Over 32K tokens:** Jev with the long-context header (up to 262K tokens; slower and somewhat less accurate) or OpenAI Decisions. First consider trimming the state in a code node, for example by dropping tool schemas or repeated content.
 3. **LLM judge** when the judgement needs reasoning: multi-step checks, math, comparing code against a request, or a written rationale. Use a reasoning model from whichever provider the user has keys for, such as `openai:gpt-5.5` or `anthropic:claude-opus-5` (Opus over Sonnet), but not a top-tier model like `claude-fable-5-1`: an evaluator runs on every run it scores, so pick the cheapest model that reasons well enough.
 
 Optimize for cost throughout. If the user cares most about cost, build on decision models and code. Keep LLM judges to the nodes that need reasoning.
@@ -87,9 +87,9 @@ grounded = DecisionModel(
         model="jev-latest",
         client=httpx2.Client(timeout=120, headers={"TypeSafe-Danger-Zone-Long-Context": "true"}),
     ),
-    inputs={"answer": Run.outputs.answer, "sources": sources.text},
-    questions={"grounded": Noul(instructions="Is every factual claim in the answer supported by the sources?")},
-    description="Checks the answer's claims against the sources",
+    inputs={"trajectory": Trajectory},
+    questions={"grounded": Noul(instructions="Is every factual claim in the final answer supported by the tool results?")},
+    description="Checks the final answer's claims against the tool results",
 )
 ```
 
