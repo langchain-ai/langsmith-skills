@@ -218,40 +218,28 @@ graph_evaluator = graph.as_evaluator(answer)
 
 `as_evaluator(node)` returns a `(run, example)` evaluator that runs the graph and reports that node's `score` (and `comment`, if it returns one) under the node's name; `key="..."` renames it. A node with exactly one output reports that output instead. `run` and `example` can be LangSmith objects or dicts, and `example` is optional for online evaluators.
 
-Test it on a few real runs before attaching it anywhere: fetch them with `langsmith runs get '<run-id>' --full --format json`, call `graph_evaluator(run)` locally, and check each node's output with `graph.run(run=run)`. With tracing on, the whole graph is traced as a single evaluator trace that includes each node's output, so a wrong final score can be traced to the node that produced it.
+Test it on a few real runs before attaching it anywhere: save each with `langsmith runs get '<run-id>' --include-io --format json -o run.json`, load it with `run = json.load(open("run.json"))`, call `graph_evaluator(run)`, and check each node's output with `graph.run(run=run)`. With tracing on, the whole graph is traced as a single evaluator trace that includes each node's output, so a wrong final score can be traced to the node that produced it.
 
 Use `graph_evaluator` offline by passing it to `evaluate(..., evaluators=[graph_evaluator])` (see `langsmith-evaluator` for run functions and datasets).
 
 ## Run it inside LangSmith
 
-Create it with the LangSmith Python SDK (`pip install "langsmith>=0.15.0"`) rather than raw API calls or `langsmith evaluators upload`, which can't declare the packages a graph needs. The `Langsmith` client reads `LANGSMITH_API_KEY`; pass the workspace ID as `tenant_id`, and `base_url` for a non-US or self-hosted LangSmith (the API host, without `/api`):
+Create it with the LangSmith CLI (`langsmith` 0.5.0 or later) rather than raw API calls, an SDK script, or `langsmith evaluators upload`, which can't declare the packages a graph needs. The CLI reads `LANGSMITH_API_KEY`. Pass `--workspace` with the workspace ID, and `--api-url` for a non-US or self-hosted LangSmith, before `online-evaluators`. `@` reads a file's contents:
 
-```python
-from pathlib import Path
-
-from langsmith import Langsmith
-
-client = Langsmith(tenant_id="<workspace id>")
-created = client.online_evaluators.create(
-    name="Answer quality",
-    type="code",
-    code_evaluator={
-        "code": Path("answer_quality.py").read_text(),
-        "language": "python",
-        "advanced_features_enabled": True,
-        "workspace_secrets_keys": ["ANTHROPIC_API_KEY", "TYPESAFE_API_KEY"],
-        "dependencies": "openevals[typesafe]==0.2.5\nlangchain-anthropic",
-    },
-)
-evaluator_id = created.evaluator.id
+```bash
+langsmith --workspace <workspace id> online-evaluators create --type code --name "Answer quality" \
+  --code-evaluator.code @answer_quality.py \
+  --code-evaluator.advanced-features-enabled \
+  --code-evaluator.dependencies $'openevals[typesafe]==0.2.5\nlangchain-anthropic' \
+  --code-evaluator.workspace-secrets-keys '[ANTHROPIC_API_KEY, TYPESAFE_API_KEY]'
 ```
 
-- `dependencies` is one package per line: pin `openevals==0.2.5` (`openevals[typesafe]==0.2.5` when the file has a Jev decision model, as in this example), add `langchain-<provider>` for each judge provider other than OpenAI, and `langchain-openai>=1.8.1` for OpenAI Decisions.
-- `workspace_secrets_keys` names the provider keys the file calls, matching the placeholders at the top of the file.
-- **Runs** (the default): leave out `code_evaluator_input`.
-- **Threads:** set `code_evaluator_input` in `code_evaluator` to `thread`, `trajectory`, `all_messages`, `human_ai_pairs`, or `first_human_last_ai`. Only the selected representation is populated. A thread evaluator can only be attached to threads, and a run evaluator only to runs.
+- `--code-evaluator.dependencies` is one package per line: pin `openevals==0.2.5` (`openevals[typesafe]==0.2.5` when the file has a Jev decision model, as in this example), add `langchain-<provider>` for each judge provider other than OpenAI, and `langchain-openai>=1.8.1` for OpenAI Decisions. A graph evaluator needs its packages, so the workspace must support advanced code evaluators.
+- `--code-evaluator.workspace-secrets-keys` takes a list, such as `'[ANTHROPIC_API_KEY, TYPESAFE_API_KEY]'`, naming the provider keys the file calls and matching the placeholders at the top of the file.
+- **Runs** (the default): leave out `--code-evaluator.code-evaluator-input`.
+- **Threads:** set `--code-evaluator.code-evaluator-input` to `thread`, `trajectory`, `all_messages`, `human_ai_pairs`, or `first_human_last_ai`. Only the selected representation is populated. A thread evaluator can only be attached to threads, and a run evaluator only to runs.
 
-Then attach the evaluator to the tracing project (online) or dataset (offline). To change it later, run `client.online_evaluators.update(evaluator_id, code_evaluator={"code": Path("answer_quality.py").read_text()})`.
+Then attach the evaluator to the tracing project (online) or dataset (offline). To change it later, run `langsmith --workspace <workspace id> online-evaluators update --evaluator-id <id> --code-evaluator.code @answer_quality.py`.
 
 ## Examples
 
