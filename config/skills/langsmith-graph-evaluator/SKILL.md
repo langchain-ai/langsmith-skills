@@ -59,7 +59,7 @@ Ask one question that includes the suggestion and why it fits (the agent type an
 Then pin down the data:
 
 - **Runs:** confirm the exact fields in `run.inputs` and `run.outputs`.
-- **Threads:** choose the input representation (raw `thread`, `trajectory`, `all_messages`, `human_ai_pairs`, or `first_human_last_ai`) and inspect representative data in that format. For raw `thread`, confirm the fields needed in each root run's `inputs` and `outputs` in `thread.runs`.
+- **Threads:** default to `trajectory` when it's available: its messages include tool calls and tool results. It needs LangSmith Cloud, or self-hosted v0.17 or later with queries switched to SmithDB. Otherwise choose raw `thread`, `all_messages`, `human_ai_pairs`, or `first_human_last_ai`. An evaluator can't switch between `trajectory` and the other inputs once it's saved. Inspect representative data in the chosen format. For raw `thread`, confirm the fields needed in each root run's `inputs` and `outputs` in `thread.runs`.
 - **Dataset:** also confirm its `example.outputs`.
 
 ## Choose models
