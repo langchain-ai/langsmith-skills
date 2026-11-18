@@ -128,8 +128,8 @@ Choice(instructions="Tone", criteria={"calm": None, "rude": None})   # chosen la
 
 ### Rules for LangSmith
 
-- Give each `LLM` and `DecisionModel` a `description="..."`, and a code node a docstring, so LangSmith can label the nodes; add `display_name="..."` when a name doesn't read well as a label.
-- Write their arguments inline as literals (only `prompt` may name a top-level constant, and `output_schema` a class in the file), not computed values like f-strings.
+- Give each `LLM` and `DecisionModel` a `description="..."` and a code node a docstring so LangSmith can label the nodes; add `display_name="..."` when a name doesn't read well as a label.
+- Write `LLM` and `DecisionModel` arguments as literal values, not computed ones like f-strings. The exceptions: `prompt` can name a string or list defined at the top of the file, `output_schema` can name a class defined in the file, and `model` can be a decision model instance (see Choose models).
 - List every node in one `Graph([...])`.
 - Define `evaluate(ctx)` and return exactly a `score` and optional `comment`, so the feedback is named after the evaluator.
 - LangSmith sends each workspace secret with the model calls, so the file never holds a key; the clients still need some key to start, so set a placeholder at the top of the file.
