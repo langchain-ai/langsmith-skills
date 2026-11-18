@@ -23,10 +23,10 @@ The agent or dataset decides the kind of evaluator:
 - **Agent and environment** (or a tracing project): an online evaluator on that project's runs. The environment's `project_id` is its tracing project.
 - **Dataset:** an offline evaluator on experiments over that dataset.
 
-Read the agent code in the user's repo and a sample of its recent traces in LangSmith (see `langsmith-trace`), or, for a dataset, its examples and recent experiment runs. Reuse any agent, environment, tracing project, dataset, trace link, or code location already supplied in the conversation, the selected agent or dataset, or local project configuration. Do not assume the project is named `Dev` or require a separate Dev project when a tracing project or trace link is already supplied. Note what is still missing:
+Read the agent code in the user's repo and a sample of its recent traces in LangSmith (see `langsmith-trace`), or, for a dataset, its examples and recent experiment runs. Reuse any agent, environment, tracing project, dataset, trace link, or code location already supplied in the conversation, the selected agent or dataset, or local project configuration. Note what is still missing:
 
 - **Code:** its repository path or entry point.
-- **Traces:** a development (Dev) tracing project or a representative trace link.
+- **Traces:** the agent and environment, or a representative trace link.
 
 From the traces, note the fields the evaluator could read and roughly how large they are (about 4 characters per token); input size decides the model (see Choose models).
 
