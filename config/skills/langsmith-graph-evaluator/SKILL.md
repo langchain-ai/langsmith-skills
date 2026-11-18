@@ -54,14 +54,12 @@ If the user has said what to measure, use it. If not, suggest a starting evaluat
 - **Task completion:** whether the agent did what was asked. A decision model by default; an LLM judge with a reasoning model when completion means checking several steps or tool results.
 - **Code correctness:** code checks first (the generated code parses; test, lint, or build tool calls in the trace succeeded), then an LLM judge with a reasoning model on whether the change does what was asked. A failed code check scores 0.
 
-Add a second evaluator only for a failure the traces clearly show, such as repeated tool errors.
-
 Ask one question that includes the suggestion and why it fits (the agent type and the evidence), runs or threads, and any missing code or tracing context from Gather context. Wait for the answer before writing the evaluator.
 
 Then pin down the data:
 
 - **Runs:** confirm the exact fields in `run.inputs` and `run.outputs`.
-- **Threads:** choose the input representation (raw `thread`, `all_messages`, `human_ai_pairs`, or `first_human_last_ai`) and inspect representative data in that format. For raw `thread`, confirm the fields needed in each root run's `inputs` and `outputs` in `thread.runs`.
+- **Threads:** choose the input representation (raw `thread`, `trajectory`, `all_messages`, `human_ai_pairs`, or `first_human_last_ai`) and inspect representative data in that format. For raw `thread`, confirm the fields needed in each root run's `inputs` and `outputs` in `thread.runs`.
 - **Dataset:** also confirm its `example.outputs`.
 
 ## Choose models
@@ -87,7 +85,7 @@ grounded = DecisionModel(
         model="jev-latest",
         client=httpx2.Client(timeout=120, headers={"TypeSafe-Danger-Zone-Long-Context": "true"}),
     ),
-    inputs={"trajectory": Trajectory},
+    inputs={"messages": Trajectory.messages},
     questions={"grounded": Noul(instructions="Is every factual claim in the final answer supported by the tool results?")},
     description="Checks the final answer's claims against the tool results",
 )
@@ -177,7 +175,7 @@ def evaluate(ctx):
 
 ### Threads
 
-To score whole threads, read the thread instead of `Run`. For the folded formats (`all_messages`, `human_ai_pairs`, `first_human_last_ai`), read the selected string through a code node's `ctx` parameter (for example, `ctx.all_messages`). For raw `thread`, a code node's `thread` parameter gets `thread_id`, `session_id`, and `runs`, the thread's root runs in order, each with its `inputs` and `outputs`. Build what a judge needs in a code node:
+To score whole threads, read the thread instead of `Run`. For the folded formats (`all_messages`, `human_ai_pairs`, `first_human_last_ai`), read the selected string through a code node's `ctx` parameter (for example, `ctx.all_messages`). For `trajectory`, read its messages, including tool calls and tool results, with `Trajectory.messages`. For raw `thread`, a code node's `thread` parameter gets `thread_id`, `session_id`, and `runs`, the thread's root runs in order, each with its `inputs` and `outputs`. Build what a judge needs in a code node:
 
 ```python
 @node
@@ -231,6 +229,14 @@ Create it through the API rather than `langsmith evaluators upload`, which can't
 - `dependencies` is one package per line: pin `openevals==0.2.5` (`openevals[typesafe]==0.2.5` when the file has a Jev decision model, as in this example), add `langchain-<provider>` for each judge provider other than OpenAI, and `langchain-openai>=1.8.1` for OpenAI Decisions.
 - `workspace_secrets_keys` names the provider keys the file calls, matching the placeholders at the top of the file.
 - **Runs** (the default): leave out `code_evaluator_input`.
-- **Threads:** set `code_evaluator_input` in `code_evaluator` to `thread`, `all_messages`, `human_ai_pairs`, or `first_human_last_ai`. Only the selected representation is populated. A thread evaluator can only be attached to threads, and a run evaluator only to runs.
+- **Threads:** set `code_evaluator_input` in `code_evaluator` to `thread`, `trajectory`, `all_messages`, `human_ai_pairs`, or `first_human_last_ai`. Only the selected representation is populated. A thread evaluator can only be attached to threads, and a run evaluator only to runs.
 
 Then attach the evaluator to the tracing project (online) or dataset (offline). To change it later, `PATCH <LangSmith API URL>/v1/platform/evaluators/<id>` with `{"code_evaluator": {"code": "<the whole Python file>"}}`.
+
+## Examples
+
+[Use advanced code evaluators](https://docs.langchain.com/langsmith/advanced-code-evaluators) has more examples of evaluators that run inside LangSmith:
+
+- [Write the evaluator function](https://docs.langchain.com/langsmith/advanced-code-evaluators#write-the-evaluator-function): the `evaluate(ctx)` function and what `ctx` holds.
+- [Score runs with a decision model](https://docs.langchain.com/langsmith/advanced-code-evaluators#score-runs-with-a-decision-model): trims a run's inputs and outputs in code, then asks Jev whether the output answers the input.
+- [Evaluate threads](https://docs.langchain.com/langsmith/advanced-code-evaluators#evaluate-threads): each thread input (`thread`, `trajectory`, `all_messages`, `human_ai_pairs`, `first_human_last_ai`) and how to read it.
