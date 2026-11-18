@@ -1,6 +1,6 @@
 ---
 name: langsmith-graph-evaluator
-description: "Experimental. Build a LangSmith evaluator as a graph of steps with openevals.graph: code checks, LLM judges, and decision models wired together, each traced on its own and drawn as a graph in LangSmith. Use when an evaluator needs several chained checks or the user asks for a graph or multi-step evaluator. For a single judge or code check, use langsmith-evaluator."
+description: "Experimental. Build a LangSmith evaluator as a graph of steps with openevals.graph: code checks, LLM judges, and decision models wired together, traced as a single evaluator trace and drawn as a graph in LangSmith. Use when an evaluator needs several chained checks or the user asks for a graph or multi-step evaluator. For a single judge or code check, use langsmith-evaluator."
 ---
 
 # Build a graph evaluator
@@ -206,7 +206,7 @@ graph_evaluator = graph.as_evaluator(answer)
 
 `as_evaluator(node)` returns a `(run, example)` evaluator that runs the graph and reports that node's `score` (and `comment`, if it returns one) under the node's name; `key="..."` renames it. A node with exactly one output reports that output instead. `run` and `example` can be LangSmith objects or dicts, and `example` is optional for online evaluators.
 
-Test it on a few real runs before attaching it anywhere: fetch them with `langsmith run get '<run-id>' --full --format json`, call `graph_evaluator(run)` locally, and check each node's output with `graph.run(run=run)`. With tracing on, each node appears as its own span under the evaluator's run, so a wrong final score can be traced to the node that produced it.
+Test it on a few real runs before attaching it anywhere: fetch them with `langsmith run get '<run-id>' --full --format json`, call `graph_evaluator(run)` locally, and check each node's output with `graph.run(run=run)`. With tracing on, the whole graph is traced as a single evaluator trace that includes each node's output, so a wrong final score can be traced to the node that produced it.
 
 Use `graph_evaluator` offline by passing it to `evaluate(..., evaluators=[graph_evaluator])` (see `langsmith-evaluator` for run functions and datasets).
 
