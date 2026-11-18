@@ -110,7 +110,7 @@ Set the provider keys the graph calls (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `T
 
 ### Nodes
 
-Make a node only for a meaningful step; keep small helpers as plain functions. One node is fine. Every node is a top-level name in the file, so LangSmith can read the graph from the source.
+Make a node only for a meaningful step; keep small helpers as plain functions. An evaluator with just a single node is fine and preferred if it can reliably accomplish the user's goals. Every node is a top-level name in the file, so LangSmith can read the graph from the source.
 
 - **Code:** a function decorated with `@node` that returns a dict. A parameter named `run`, `thread`, `trajectory`, or `example` (or annotated `Run`, `Thread`, `Trajectory`, or `Example`) gets that context. A parameter named after another node gets that node's outputs.
 - **LLM judge:** `LLM(model="<provider>:<model>", prompt=..., inputs={...}, output_schema=...)`. `prompt` is a string or a list of `(role, content)` messages with `{{name}}` placeholders. `output_schema` is a TypedDict or Pydantic class defined in the file, or a JSON schema; without one the node returns `{"score": number}`, and `feedback_key` renames that key.
