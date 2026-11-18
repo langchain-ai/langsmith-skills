@@ -1,6 +1,6 @@
 ---
 name: langsmith-graph-evaluator
-description: "Experimental. Build a LangSmith evaluator as a graph of steps with openevals.graph: code checks, LLM judges, and decision models wired together, each traced as its own span and drawn as a graph in LangSmith. Use when an evaluator needs several chained checks, or the user asks for a graph, multi-step, or composed evaluator. For a single judge or code check, use langsmith-evaluator."
+description: "Experimental. Build a LangSmith evaluator as a graph of steps with openevals.graph: code checks, LLM judges, and decision models wired together, each traced on its own and drawn as a graph in LangSmith. Use when an evaluator needs several chained checks or the user asks for a graph or multi-step evaluator. For a single judge or code check, use langsmith-evaluator."
 ---
 
 # Build a graph evaluator
