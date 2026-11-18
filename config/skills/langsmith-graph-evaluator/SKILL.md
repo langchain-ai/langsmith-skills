@@ -7,6 +7,12 @@ description: "Experimental. Build a LangSmith evaluator as a graph of steps with
 
 `openevals.graph` is experimental; its API may change between releases. Python only.
 
+## Important
+
+- Never write a key into the evaluator file.
+
+## Workflow
+
 Use this workflow:
 
 1. [Gather context](#gather-context): the agent's code and recent traces.
@@ -99,7 +105,7 @@ For OpenAI Decisions, pass `model=OpenAIClassifier(model="gpt-6-luna")` instead 
 pip install "openevals==0.2.5"   # openevals[typesafe] for Jev; add langchain-<provider> for judges other than OpenAI
 ```
 
-Set the provider keys the graph calls (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `TYPESAFE_API_KEY` for Jev). Never write a key into the evaluator file.
+Set the provider keys the graph calls (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `TYPESAFE_API_KEY` for Jev).
 
 ### Nodes
 
