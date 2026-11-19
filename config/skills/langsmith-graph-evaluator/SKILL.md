@@ -133,6 +133,7 @@ Choice(instructions="Tone", criteria={"calm": None, "rude": None})   # chosen la
 - List every node in one `Graph([...])`.
 - Define `evaluate(ctx)` and return exactly a `score` and optional `comment`, so the feedback is named after the evaluator.
 - LangSmith's sandbox proxy adds each selected workspace secret as a header on requests to that secret's allowed hosts, so the key never enters the sandbox or the file. The provider clients still need a key to start, so set a placeholder at the top of the file. `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, and `TYPESAFE_API_KEY` have default hosts; other providers need an admin to configure allowed hosts first.
+- To call the LangSmith API from the evaluator, use the `langsmith` SDK (`Client()`), not raw HTTP. LangSmith sets its endpoint and authenticates the calls in the sandbox, so the file needs no key. They run as whoever last saved the evaluator, so save production evaluators with a workspace service key.
 
 ### Example
 
