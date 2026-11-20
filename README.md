@@ -1,144 +1,65 @@
 # LangSmith Skills
 
 > [!IMPORTANT]
-> **This repository is deprecated.** The LangSmith skills have moved to
-> [langchain-ai/langchain-skills](https://github.com/langchain-ai/langchain-skills),
-> which ships them with the LangChain, LangGraph and Deep Agents skills in one
-> plugin. This repository no longer receives updates and will be archived.
->
-> To switch, install the new plugin and remove this one:
->
-> ```bash
-> /plugin marketplace add langchain-ai/langchain-skills
-> /plugin install langchain-skills@langchain-skills
-> /plugin uninstall langsmith-skills@langsmith-skills
-> ```
->
-> Or with `npx skills`: `npx skills add langchain-ai/langchain-skills --skill '*' --yes`,
-> then delete the old `langsmith-*` skill folders.
->
-> | Old skill | New skill |
-> |------|-------------|
-> | `langsmith-trace` | `langchain-agent-tracing` |
-> | `langsmith-online-eval-engineering` | `langchain-agent-monitoring` |
-> | `langsmith-dataset`, `langsmith-evaluator`, `langsmith-graph-evaluator`, `langsmith-experiment-diagnosis` | `langchain-agent-experiments` |
+> **This repository is deprecated and will be archived.** The LangSmith skills
+> moved to [langchain-ai/langchain-skills](https://github.com/langchain-ai/langchain-skills),
+> which ships them with the LangChain, LangGraph, and Deep Agents skills in one
+> plugin, together with the LangChain docs and API reference MCP servers. This
+> repository no longer receives updates; its skills now only point to their
+> replacements.
 
-Agent skills for observing and evaluating LLM applications with [LangSmith](https://smith.langchain.com/). Query traces, build evaluation datasets, and create custom evaluators — all from your coding agent.
+## Migrate
 
-> Looking for skills to **build and improve** agents with LangChain, LangGraph, or Deep Agents? See [langchain-skills](https://github.com/langchain-ai/langchain-skills).
+Remove these skills first, so your agent doesn't see two overlapping sets of
+guidance, then install the new plugin. The full steps for every install method
+are in the
+[langchain-skills migration guide](https://github.com/langchain-ai/langchain-skills#migrate-from-the-standalone-skills).
 
-## Supported Coding Agents
+- **Claude Code plugin:** remove this marketplace, which also uninstalls its
+  plugin, then install the new one and turn on
+  [auto-update](https://github.com/langchain-ai/langchain-skills#updates):
 
-These skills can be installed for any agent supported by [`skills.sh`](https://skills.sh), including Claude Code, [Deep Agents CLI](https://docs.langchain.com/oss/python/deepagents/cli/overview), Cursor, Windsurf, Goose, and [many more](https://github.com/vercel-labs/skills).
+  ```bash
+  claude plugin marketplace remove langsmith-skills
+  claude plugin install langchain-skills --marketplace langchain-ai/langchain-skills
+  ```
 
-## Prerequisites
+- **`npx skills`:** remove the old skills (once with `--global`, and once in
+  each project where you installed them), then add the new ones:
 
-- A [LangSmith API key](https://smith.langchain.com/)
+  ```bash
+  npx skills remove langsmith-custom-apps langsmith-dataset langsmith-evaluator \
+    langsmith-experiment-diagnosis langsmith-graph-evaluator \
+    langsmith-online-eval-engineering langsmith-trace --global --yes
+  npx skills add langchain-ai/langchain-skills --skill '*' --yes --global
+  ```
 
-## Installation
+- **`install.sh` or a copy:** delete the `langsmith-*` skill folders from the
+  skills directory you installed into, such as `~/.claude/skills/` or
+  `.claude/skills/`, then install the new plugin.
+- **Deep Agents Code:** install from the new marketplace:
 
-### Quick Install
+  ```bash
+  dcode plugin marketplace add langchain-ai/langchain-skills
+  dcode plugin install langchain-skills@langchain-skills
+  ```
 
-Using [`npx skills`](https://github.com/vercel-labs/skills):
+Or paste this into your coding agent:
 
-**Local** (current project):
-```bash
-npx skills add langchain-ai/langsmith-skills --skill '*' --yes
-```
+> Migrate me to the langchain-skills plugin by following
+> https://github.com/langchain-ai/langchain-skills#migrate-from-the-standalone-skills:
+> remove the old standalone skills, install the plugin, and enable auto-update
+> for its marketplace.
 
-**Global** (all projects):
-```bash
-npx skills add langchain-ai/langsmith-skills --skill '*' --yes --global
-```
+## Where each skill went
 
-To link skills to a specific agent (e.g. Claude Code):
-```bash
-npx skills add langchain-ai/langsmith-skills --agent claude-code --skill '*' --yes --global
-```
-
----
-
-### Claude Code Plugin
-
-Install directly as a [Claude Code plugin](https://code.claude.com/docs/en/plugins):
-
-```bash
-/plugin marketplace add langchain-ai/langsmith-skills
-/plugin install langsmith-skills@langsmith-skills
-```
-
----
-
-### Install Script (Claude Code & Deep Agents CLI only)
-
-Alternatively, clone the repo and use the install script:
-
-```bash
-# Install for Claude Code in current directory (default)
-./install.sh
-
-# Install for Claude Code in a specific project directory
-./install.sh ~/my-project
-
-# Install for Claude Code globally
-./install.sh --global
-
-# Install for DeepAgents CLI in a specific project directory
-./install.sh --deepagents ~/my-project
-
-# Install for DeepAgents CLI globally (includes agent persona)
-./install.sh --deepagents --global
-```
-
-| Flag / Argument | Description |
+| Old skill | New skill |
 |------|-------------|
-| `DIRECTORY` | Target project directory (default: current directory, ignored with `--global`) |
-| `--claude` | Install for Claude Code (default) |
-| `--deepagents` | Install for DeepAgents CLI |
-| `--global`, `-g` | Install globally instead of current directory |
-| `--force`, `-f` | Overwrite skills with same names as this package |
-| `--yes`, `-y` | Skip confirmation prompts |
+| `langsmith-trace` | `langchain-agent-tracing` |
+| `langsmith-online-eval-engineering` | `langchain-agent-monitoring` |
+| `langsmith-dataset`, `langsmith-evaluator`, `langsmith-graph-evaluator`, `langsmith-experiment-diagnosis` | `langchain-agent-experiments` |
+| `langsmith-custom-apps` | Removed as a skill. `langchain-agent-experiments` covers when to use a Custom App; to build one, see the [Custom Apps docs](https://docs.langchain.com/langsmith/custom-apps). |
 
-## Usage
-
-After installation, set your API keys:
-
-```bash
-export LANGSMITH_API_KEY=<your-key>
-export OPENAI_API_KEY=<your-key>      # For OpenAI models
-export ANTHROPIC_API_KEY=<your-key>   # For Anthropic models
-```
-
-Then run your coding agent from the directory where you installed (for local installs) or from anywhere (for global installs).
-
-## Available Skills (7)
-
-### LangSmith
-- **langsmith-trace** - Query and export traces (includes helper scripts)
-- **langsmith-dataset** - Generate evaluation datasets from traces (includes helper scripts)
-- **langsmith-evaluator** - Create custom evaluators (includes helper scripts)
-- **langsmith-graph-evaluator** - Build evaluators as a graph of code, LLM and decision-model steps with `openevals.graph` (experimental)
-- **langsmith-experiment-diagnosis** - Find low-scoring experiment examples, explain likely causes, and propose fixes
-- **langsmith-custom-apps** - Build, replicate, verify, and share LangSmith Custom Apps
-- **langsmith-online-eval-engineering** - Design, test, and attach online evaluators for production traces and conversation threads
-
-**Note:** Several skills include Python and TypeScript helper scripts for common operations.
-
-## Development
-
-Agent configuration lives in `config/`. To update an existing installation:
-
-```bash
-./install.sh --force
-```
-
-### Checking skill CLI commands
-
-Skills should only reference commands that exist in the released CLI. `scripts/check_cli_commands.py` extracts every `langsmith ...` command from `config/` (shell code blocks and inline code) and checks the command path and each flag against `langsmith <command> --help`. Unknown commands, singular aliases such as `langsmith trace` (use `traces`), and flags that `--help` does not list, including hidden ones, fail the check. `--api-key` is the one allowed hidden flag. Positional arguments are not checked.
-
-```bash
-uv run --no-project scripts/check_cli_commands.py            # all of config/
-uv run --no-project scripts/check_cli_commands.py path/to/SKILL.md
-```
-
-It uses the `langsmith` on your `PATH` (override with `LANGSMITH_BIN`). The `skills-cli-check` workflow runs it against the latest CLI release on every pull request and weekly.
+The last full version of these skills is in this repository's git history.
+Contribute to [langchain-skills](https://github.com/langchain-ai/langchain-skills)
+instead of opening pull requests here.
