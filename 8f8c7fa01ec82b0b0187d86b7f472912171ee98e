@@ -1,0 +1,19 @@
+config/skills/langsmith-graph-evaluator/SKILL.md
+  s_7df881e4cb5879::t_ec2fda1814fd0d 72,75-77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8f8c7fa01ec82b0b0187d86b7f472912171ee98e",
+  "prompts": {},
+  "sessions": {
+    "s_7df881e4cb5879": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "04cf870b-69c3-486d-8ebd-4a3918095eb8",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Brendan Whiting <brendan.whiting@langchain.dev>"
+    }
+  }
+}

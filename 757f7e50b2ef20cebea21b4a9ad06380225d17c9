@@ -1,0 +1,23 @@
+config/skills/langsmith-graph-evaluator/SKILL.md
+  s_7df881e4cb5879::t_6ca6d926c6d420 1-90
+README.md
+  s_7df881e4cb5879::t_dc6c59df49a18b 93,99
+config/AGENTS.md
+  s_7df881e4cb5879::t_705f72fc680173 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "757f7e50b2ef20cebea21b4a9ad06380225d17c9",
+  "prompts": {},
+  "sessions": {
+    "s_7df881e4cb5879": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "04cf870b-69c3-486d-8ebd-4a3918095eb8",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Brendan Whiting <brendan.whiting@langchain.dev>"
+    }
+  }
+}

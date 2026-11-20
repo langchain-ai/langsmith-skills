@@ -1,0 +1,19 @@
+config/skills/langsmith-graph-evaluator/SKILL.md
+  s_6b13cffc78ffa6::t_61e569d0846f42 25-26,89,110
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d269560e21cbd14b3b87685559e855c9757a721d",
+  "prompts": {},
+  "sessions": {
+    "s_6b13cffc78ffa6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_6b13cffc78ffa6",
+        "model": "unknown"
+      },
+      "human_author": "Brendan Whiting <brendan.whiting@langchain.dev>"
+    }
+  }
+}
