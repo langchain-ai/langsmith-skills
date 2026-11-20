@@ -5,13 +5,13 @@
     "email": "support@langchain.dev"
   },
   "metadata": {
-    "description": "Agent skills for observing and evaluating LLM applications with LangSmith"
+    "description": "Deprecated: moved to langchain-ai/langchain-skills"
   },
   "plugins": [
     {
       "name": "langsmith-skills",
       "source": "./",
-      "description": "Agent skills for observing and evaluating LLM applications with LangSmith",
+      "description": "Deprecated: moved to langchain-ai/langchain-skills",
       "homepage": "https://github.com/langchain-ai/langsmith-skills"
     }
   ]
