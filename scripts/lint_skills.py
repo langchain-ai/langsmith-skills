@@ -26,10 +26,13 @@ LANGUAGE_SPLIT_WARN = 150
 
 ALLOWED_MODELS = {
     "claude-sonnet-5",
+    "claude-sonnet-5-5",
     "claude-opus-5",
+    "claude-opus-5-5",
     "claude-fable-5-1",
     "claude-haiku-4-5-20251001",
     "gpt-5.5",
+    "gpt-6-luna",
 }
 
 MODEL_PATTERN = re.compile(

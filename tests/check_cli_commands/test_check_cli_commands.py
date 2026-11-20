@@ -52,7 +52,7 @@ on an unindented line)
   langsmith traces list [flags]
 
 Flags:
-      --full             Include everything
+      --full[=true|false]   Include everything
   -n, --limit int        Maximum number of results
       --project string   Project name
 """
